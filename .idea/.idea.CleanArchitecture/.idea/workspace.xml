@@ -19,11 +19,15 @@
   <component name="DpaMonitoringSettings">
     <option name="firstShow" value="false" />
   </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/4b9ef0955b90cd90f6838d866ade6191e884783cff47113b862dd93ace4c1247/HealthCheckEndpointRouteBuilderExtensions.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/6cff58531c0f6ed75abfe1eff81ca50d7f23d56df16e019f0d1f642d67e572d/EndpointMethodInfoApiExplorerServiceCollectionExtensions.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/src/Application/Abstractions/Service/IService.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
+  <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="CurrentFile" />
   </component>
@@ -40,6 +44,8 @@
     ".NET Launch Settings Profile.Web.Api: http.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "git-widget-placeholder": "main",
     "last_opened_file_path": "/media/ranto/Data7/projects/clean-architecture",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -146,16 +152,37 @@
       <updated>1756881074888</updated>
       <workItem from="1756881080057" duration="1269000" />
       <workItem from="1756886888082" duration="460000" />
-      <workItem from="1756887379902" duration="8919000" />
+      <workItem from="1756887379902" duration="9304000" />
     </task>
+    <task id="LOCAL-00001" summary="ideo cache">
+      <option name="closed" value="true" />
+      <created>1756897443423</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1756897443423</updated>
+    </task>
+    <task id="LOCAL-00002" summary="first commit&#10;project clonned from outside template">
+      <option name="closed" value="true" />
+      <created>1756897488909</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1756897488909</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+  <component name="UnityCheckinConfiguration" checkUnsavedScenes="true" />
   <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+    <MESSAGE value="ideo cache" />
+    <MESSAGE value="first commit&#10;project clonned from outside template" />
+    <option name="LAST_COMMIT_MESSAGE" value="first commit&#10;project clonned from outside template" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
