@@ -3,6 +3,7 @@ using Domain.Todos;
 using Domain.Users;
 using Infrastructure.DomainEvents;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using SharedKernel;
 
 namespace Infrastructure.Database;
@@ -35,6 +36,21 @@ public sealed class ApplicationDbContext(
         //     - eventual consistency
         //     - handlers can fail
 
+        IEnumerable<EntityEntry<Entity>> entries = ChangeTracker.Entries<Entity>();
+        foreach (EntityEntry<Entity> entry in entries)
+        {
+            if (entry.State == EntityState.Added)
+            {
+                entry.Entity.CreatedAt = DateTime.UtcNow;
+                entry.Entity.UpdateAt = DateTime.UtcNow;
+            }
+
+            if (entry.State == EntityState.Modified)
+            {
+                entry.Entity.UpdateAt = DateTime.UtcNow;
+                entry.Property(x => x.CreatedAt).IsModified = false;
+            }
+        }
         int result = await base.SaveChangesAsync(cancellationToken);
 
         await PublishDomainEventsAsync();
