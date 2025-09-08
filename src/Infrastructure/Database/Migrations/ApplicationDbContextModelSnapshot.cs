@@ -19,7 +19,7 @@ namespace Infrastructure.Database.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasDefaultSchema("public")
-                .HasAnnotation("ProductVersion", "8.0.7")
+                .HasAnnotation("ProductVersion", "9.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -52,7 +52,7 @@ namespace Infrastructure.Database.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_completed");
 
-                    b.Property<List<string>>("Labels")
+                    b.PrimitiveCollection<List<string>>("Labels")
                         .IsRequired()
                         .HasColumnType("text[]")
                         .HasColumnName("labels");
@@ -60,6 +60,10 @@ namespace Infrastructure.Database.Migrations
                     b.Property<int>("Priority")
                         .HasColumnType("integer")
                         .HasColumnName("priority");
+
+                    b.Property<DateTime>("UpdateAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("update_at");
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid")
@@ -81,6 +85,10 @@ namespace Infrastructure.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text")
@@ -100,6 +108,10 @@ namespace Infrastructure.Database.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("password_hash");
+
+                    b.Property<DateTime>("UpdateAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("update_at");
 
                     b.HasKey("Id")
                         .HasName("pk_users");
