@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedKernel;
 using Web.Api.Infrastructure;
+using Web.Api.Responses;
 
 namespace Web.Api.Controllers;
 
@@ -13,11 +14,12 @@ public class UserController(IUserRepository userRepository) : Controller
 {
     [HttpPost]
     [AllowAnonymous]
-    public async Task<ActionResult<Result<User>>> CreateUser(
+    public async Task<ActionResult<Result<UserResponse>>> CreateUser(
         [FromBody] CreateUserDto dto)
     {
         Result<User> result = await userRepository.AddUser(dto);
-        return Ok(result);
+        Result<UserResponse> response = result.ToResponse<UserResponse, User>();
+        return Ok(response);
     }
 
     [HttpPost("sign-in")]
@@ -25,7 +27,7 @@ public class UserController(IUserRepository userRepository) : Controller
     public async Task<ActionResult<Result<User>>> SignIn(
         [FromBody] SignInDto dto)
     {
-        User? user = await userRepository.GetUserByUsername(dto.email);
+        User? user = await userRepository.GetUserByUsername(dto.Email);
         if (user is null)
         {
             return BadRequest(
@@ -34,7 +36,7 @@ public class UserController(IUserRepository userRepository) : Controller
                 ));
         }
         
-        bool isPasswordMatched = await userRepository.VerifyIfUserMatchPassword(user, dto.password);
+        bool isPasswordMatched = await userRepository.VerifyIfUserMatchPassword(user, dto.Password);
         if (!isPasswordMatched)
         {
             return BadRequest(
