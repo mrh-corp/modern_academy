@@ -17,10 +17,10 @@ public class UserService(
         var user = new User
         {
             Id = Guid.NewGuid(),
-            FirstName = "test",
-            LastName = "test",
-            PasswordHash = hasher.Hash(dto.password),
-            Email = "test@test.com",
+            FirstName = dto.Firstname,
+            LastName = dto.Lastname,
+            PasswordHash = hasher.Hash(dto.Password),
+            Email = dto.Email,
             
         };
         user.Raise(new UserRegisteredDomainEvent(user.Id));
@@ -50,7 +50,7 @@ public class UserService(
 
     public Task<bool> VerifyIfUserMatchPassword(User user, string password)
     {
-        string hashedPassword = hasher.Hash(password);
-        return Task.FromResult(user.PasswordHash == hashedPassword);
+        bool passwordMatch = hasher.Verify(password, user.PasswordHash);
+        return Task.FromResult(passwordMatch);
     }
 }

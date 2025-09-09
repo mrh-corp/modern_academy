@@ -1,4 +1,4 @@
 namespace Application.Users.Dtos;
 
-public record CreateUserDto(string email, string password);
-public record SignInDto(string email, string password);
+public record CreateUserDto(string Email, string Firstname, string? Lastname, string Password);
+public record SignInDto(string Email, string Password);
