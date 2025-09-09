@@ -18,7 +18,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     volumes:
-      - ./.containers/db:/var/lib/postgresql/data
+      - dbData:/var/lib/postgresql/data
     ports:
       - 5455:5432
 
@@ -29,3 +29,7 @@ services:
       - ACCEPT_EULA=Y
     ports:
       - 8081:80
+      
+volumes:
+  dbData:
+    driver: local
