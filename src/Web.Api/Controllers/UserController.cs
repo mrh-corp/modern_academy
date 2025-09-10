@@ -1,5 +1,4 @@
-using Application.Users.Dtos;
-using Application.Users.Service;
+using Application.Users;
 using Domain.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,7 +17,7 @@ public class UserController(IUserRepository userRepository) : Controller
         [FromBody] CreateUserDto dto)
     {
         Result<User> result = await userRepository.AddUser(dto);
-        Result<UserResponse> response = result.ToResponse<UserResponse, User>();
+        Result<UserResponse> response = result.MapResponse<User, UserResponse>();
         return Ok(response);
     }
 
