@@ -16,7 +16,9 @@ public sealed class ApplicationDbContext(
 {
     public DbSet<User> Users { get; set; }
     public DbSet<Academy> Academies { get; set; }
-
+    public DbSet<SchoolYear> SchoolYears { get; set; }
+    public DbSet<Class> Classes { get; set; }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
