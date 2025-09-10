@@ -39,27 +39,4 @@ public static class DependencyInjection
 
         return services;
     }
-
-    public static IServiceCollection AddServices(this IServiceCollection services)
-    {
-        var assembly = Assembly.GetExecutingAssembly();
-
-        var serviceTypes = assembly.GetTypes()
-            .Where(type => type.IsClass && !type.IsAbstract && typeof(IService).IsAssignableFrom(type))
-            .ToList();
-
-        foreach (Type serviceType in serviceTypes)
-        {
-            var interfaces = serviceType.GetInterfaces()
-                .Where(i => i != typeof(IService) && typeof(IService).IsAssignableFrom(i))
-                .ToList();
-            
-            foreach (Type @interface in interfaces)
-            {
-                services.AddScoped(@interface, serviceType);
-            }
-        }
-
-        return services;
-    }
 }

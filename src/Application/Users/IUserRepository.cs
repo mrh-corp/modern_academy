@@ -1,9 +1,8 @@
 using Application.Abstractions.Service;
-using Application.Users.Dtos;
 using Domain.Users;
 using SharedKernel;
 
-namespace Application.Users.Service;
+namespace Application.Users;
 
 public interface IUserRepository : IService
 {

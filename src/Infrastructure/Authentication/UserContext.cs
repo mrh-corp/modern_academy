@@ -1,5 +1,5 @@
 ﻿using Application.Abstractions.Authentication;
-using Application.Users.Service;
+using Application.Users;
 using Domain.Users;
 using Microsoft.AspNetCore.Http;
 using SharedKernel;

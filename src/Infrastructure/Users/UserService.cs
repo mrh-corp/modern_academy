@@ -1,11 +1,11 @@
 using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
-using Application.Users.Dtos;
+using Application.Users;
 using Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using SharedKernel;
 
-namespace Application.Users.Service;
+namespace Infrastructure.Users;
 
 public class UserService(
     IApplicationDbContext context,

@@ -1,6 +1,8 @@
-﻿using System.Text;
+﻿using System.Reflection;
+using System.Text;
 using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
+using Application.Abstractions.Service;
 using Infrastructure.Authentication;
 using Infrastructure.Authorization;
 using Infrastructure.Database;
@@ -34,6 +36,30 @@ public static class DependencyInjection
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
 
         services.AddTransient<IDomainEventsDispatcher, DomainEventsDispatcher>();
+        
+        Assembly[] assemblies = 
+        [
+            Assembly.Load("Infrastructure"), // services implementation
+            Assembly.Load("Application")     // interfaces
+        ];
+
+        var serviceTypes = assemblies
+            .SelectMany(a => a.GetTypes())
+            .Where(type => type is { IsClass: true, IsAbstract: false } 
+                           && typeof(IService).IsAssignableFrom(type))
+            .ToList();
+
+        foreach (Type serviceType in serviceTypes)
+        {
+            var interfaces = serviceType.GetInterfaces()
+                .Where(i => i != typeof(IService) && typeof(IService).IsAssignableFrom(i))
+                .ToList();
+
+            foreach (Type @interface in interfaces)
+            {
+                services.AddScoped(@interface, serviceType);
+            }
+        }
 
         return services;
     }
