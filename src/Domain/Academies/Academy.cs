@@ -10,4 +10,5 @@ public sealed class Academy : Entity
     public string Email { get; set; }
     public string Contact { get; set; }
     public List<User> Administrators { get; set; }
+    public List<SchoolYear> SchoolYears { get; set; }
 }

@@ -19,3 +19,6 @@ public partial class AcademyResponse
 {
     public List<UserResponse> Administrators { get; set; }
 }
+
+[Facet(typeof(SchoolYear), nameof(SchoolYear.DomainEvents))]
+public partial class SchoolYearResponse;

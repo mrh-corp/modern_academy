@@ -14,11 +14,48 @@ public class AcademyController(IAcademyRepository academyRepository) : Controlle
 {
     [HttpPost("create")]
     [Authorize]
-    public async Task<ActionResult<AcademyResponse>> CreateAcademy([FromBody] AcademyDto academyDto)
+    public async Task<ActionResult<AcademyResponse>> CreateAcademy([FromBody] AcademyDto academyDto, CancellationToken cancellationToken)
     {
-        OneOf<Error, Academy> result = await academyRepository.CreateAcademy(academyDto);
+        OneOf<Error, Academy> result = await academyRepository.CreateAcademy(academyDto, cancellationToken);
         return result.Match<ActionResult>(
             error => BadRequest(Result.Failure(error)),
-            academy => Ok(Result.Success(academy.ToFacet<Academy, AcademyResponse>())));
+            academy => Ok(Result.Success(academy.ToFacet<Academy, AcademyResponse>()))
+            );
+    }
+
+    [HttpPost("school-year")]
+    [Authorize]
+    public async Task<ActionResult<List<SchoolYearResponse>>> CreateSchoolYear([FromBody] SchoolYearDto schoolYearDto,
+        CancellationToken token)
+    {
+        OneOf<Error, List<SchoolYear>> result = await academyRepository.CreateSchoolYear(schoolYearDto, token);
+        return result.Match<ActionResult>(
+            error =>
+            {
+                if (error.Type == ErrorType.NotFound)
+                {
+                    return NotFound(Result.Failure(error));
+                }
+
+                return BadRequest(Result.Failure(error));
+            }, schoolYears => Ok(Result.Success(schoolYears.SelectFacets<SchoolYear, SchoolYearResponse>().ToList()))
+            );
+    }
+
+    [HttpGet("{academyId}/school-year")]
+    [Authorize]
+    public async Task<ActionResult<List<SchoolYearResponse>>> GetSchoolYearList(Guid academyId, CancellationToken token)
+    {
+        OneOf<Error, List<SchoolYear>> result = await academyRepository.GetAllSchoolYear(academyId, token);
+        return result.Match<ActionResult>(
+            error =>
+            {
+                if (error.Type == ErrorType.NotFound)
+                {
+                    return NotFound(Result.Failure(error));
+                }
+                return BadRequest(Result.Failure(error));
+            }, schoolYears => Ok(Result.Success(schoolYears.SelectFacets<SchoolYear, SchoolYearResponse>().ToList()))
+        );
     }
 }
