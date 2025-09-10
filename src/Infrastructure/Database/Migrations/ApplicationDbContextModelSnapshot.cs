@@ -100,7 +100,6 @@ namespace Infrastructure.Database.Migrations
                         .HasColumnName("first_name");
 
                     b.Property<string>("LastName")
-                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("last_name");
 
