@@ -48,10 +48,20 @@ public class AcademyService(
         await using IDbContextTransaction transaction = await context.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            Academy academy = await context.Academies.SingleOrDefaultAsync(x => x.Id == schoolYearDto.AcademyId, cancellationToken);
+            Academy academy = await context.Academies
+                .Include(x => x.Administrators)
+                .Include(x => x.SchoolYears)
+                .AsSplitQuery()
+                .SingleOrDefaultAsync(x => x.Id == schoolYearDto.AcademyId, cancellationToken);
             if (academy is null)
             {
                 return AcademyErrors.NotFound(schoolYearDto.AcademyId);
+            }
+            
+            bool userIsAdmin = academy.Administrators.Any(x => x.Id == userContext.UserId);
+            if (!userIsAdmin)
+            {
+                return AcademyErrors.Forbidden(schoolYearDto.AcademyId);
             }
 
             var schoolYear = new SchoolYear
@@ -59,9 +69,15 @@ public class AcademyService(
                 StartDate = schoolYearDto.StartDate,
                 EndDate = schoolYearDto.EndDate
             };
+            
+            bool schoolYearExists = academy.SchoolYears.Any(x => x.Label == schoolYear.Label);
+            if (schoolYearExists)
+            {
+                return AcademyErrors.SchoolYearConflict(schoolYear.Label);
+            }
             context.SchoolYears.Add(schoolYear);
             await context.SaveChangesAsync(cancellationToken);
-        
+            academy.SchoolYears ??= [];
             academy.SchoolYears.Add(schoolYear);
             await context.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);

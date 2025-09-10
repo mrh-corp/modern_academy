@@ -32,12 +32,13 @@ public class AcademyController(IAcademyRepository academyRepository) : Controlle
         return result.Match<ActionResult>(
             error =>
             {
-                if (error.Type == ErrorType.NotFound)
+                var errorResult =  Result.Failure(error);
+                return error.Type switch
                 {
-                    return NotFound(Result.Failure(error));
-                }
-
-                return BadRequest(Result.Failure(error));
+                    ErrorType.NotFound => NotFound(errorResult),
+                    ErrorType.Forbidden => StatusCode(StatusCodes.Status403Forbidden, errorResult),
+                    _ => BadRequest(errorResult)
+                };
             }, schoolYears => Ok(Result.Success(schoolYears.SelectFacets<SchoolYear, SchoolYearResponse>().ToList()))
             );
     }
