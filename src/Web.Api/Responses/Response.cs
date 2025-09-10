@@ -1,30 +1,16 @@
-using System.Reflection;
+using Facet.Extensions;
 using SharedKernel;
 
 namespace Web.Api.Responses;
 
 public static class Response
 {
-    public static Result<TResponse> ToResponse<TResponse, TSource>(this Result<TSource> source) where TResponse : new()
+    public static Result<TResponse> MapResponse<TSource, TResponse>(this Result<TSource> source) where TResponse: class, new()
     {
-        var response = new TResponse();
-        TSource result = source.Value;
-        PropertyInfo[] sourceProps = typeof(TSource).GetProperties();
-        PropertyInfo[] targetProps = typeof(TSource).GetProperties();
-
-        foreach (PropertyInfo targetProp in targetProps)
-        {
-            PropertyInfo? sourceProp = sourceProps.FirstOrDefault(x => x.Name == targetProp.Name);
-            if (sourceProp is not null && targetProp.CanWrite)
-            {
-                object? value = sourceProp.GetValue(result, null);
-                targetProp.SetValue(response, value);
-            }
-        }
-
         return new Result<TResponse>(
-            response,
+            source.Value.ToFacet<TSource, TResponse>(),
             source.IsSuccess,
-            source.Error);
+            source.Error
+        );
     }
 }
