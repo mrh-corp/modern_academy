@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
 using Application.Abstractions.Service;
@@ -10,6 +11,7 @@ using Infrastructure.DomainEvents;
 using Infrastructure.Time;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
@@ -102,6 +104,22 @@ public static class DependencyInjection
                     ValidIssuer = configuration["Jwt:Issuer"],
                     ValidAudience = configuration["Jwt:Audience"],
                     ClockSkew = TimeSpan.Zero
+                };
+
+                o.Events = new JwtBearerEvents()
+                {
+                    OnChallenge = context =>
+                    {
+                        context.HandleResponse();
+
+                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        context.Response.ContentType = "application/json";
+
+                        var error = Result.Failure(
+                            Error.Problem("Token.NotProvided", "You are not authorized, Token missing or invalid"));
+                        string json = JsonSerializer.Serialize(error);
+                        return context.Response.WriteAsync(json);
+                    }
                 };
             });
 
