@@ -24,6 +24,47 @@ namespace Infrastructure.Database.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Domain.Academies.Academy", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Contact")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("contact");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("email");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<DateTime>("UpdateAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("update_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_academies");
+
+                    b.ToTable("academies", "public");
+                });
+
             modelBuilder.Entity("Domain.Todos.TodoItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -70,12 +111,12 @@ namespace Infrastructure.Database.Migrations
                         .HasColumnName("user_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_todo_items");
+                        .HasName("pk_todo_item");
 
                     b.HasIndex("UserId")
-                        .HasDatabaseName("ix_todo_items_user_id");
+                        .HasDatabaseName("ix_todo_item_user_id");
 
-                    b.ToTable("todo_items", "public");
+                    b.ToTable("todo_item", "public");
                 });
 
             modelBuilder.Entity("Domain.Users.User", b =>
@@ -84,6 +125,10 @@ namespace Infrastructure.Database.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<Guid?>("AcademyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("academy_id");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -115,6 +160,9 @@ namespace Infrastructure.Database.Migrations
                     b.HasKey("Id")
                         .HasName("pk_users");
 
+                    b.HasIndex("AcademyId")
+                        .HasDatabaseName("ix_users_academy_id");
+
                     b.HasIndex("Email")
                         .IsUnique()
                         .HasDatabaseName("ix_users_email");
@@ -129,7 +177,20 @@ namespace Infrastructure.Database.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_todo_items_users_user_id");
+                        .HasConstraintName("fk_todo_item_users_user_id");
+                });
+
+            modelBuilder.Entity("Domain.Users.User", b =>
+                {
+                    b.HasOne("Domain.Academies.Academy", null)
+                        .WithMany("Administrators")
+                        .HasForeignKey("AcademyId")
+                        .HasConstraintName("fk_users_academies_academy_id");
+                });
+
+            modelBuilder.Entity("Domain.Academies.Academy", b =>
+                {
+                    b.Navigation("Administrators");
                 });
 #pragma warning restore 612, 618
         }

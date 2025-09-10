@@ -1,3 +1,4 @@
+using Domain.Academies;
 using Domain.Users;
 using Facet;
 using SharedKernel;
@@ -11,3 +12,10 @@ public partial class EntityResponse;
     typeof(User), 
     nameof(User.PasswordHash), nameof(User.DomainEvents))]
 public partial class UserResponse;
+
+[Facet(typeof(Academy), nameof(Academy.DomainEvents), nameof(Academy.Administrators),
+    Configuration = typeof(AcademyMapConfig))]
+public partial class AcademyResponse
+{
+    public List<UserResponse> Administrators { get; set; }
+}

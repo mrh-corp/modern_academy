@@ -1,4 +1,5 @@
 ﻿using Application.Abstractions.Data;
+using Domain.Academies;
 using Domain.Todos;
 using Domain.Users;
 using Infrastructure.DomainEvents;
@@ -14,8 +15,7 @@ public sealed class ApplicationDbContext(
     : DbContext(options), IApplicationDbContext
 {
     public DbSet<User> Users { get; set; }
-
-    public DbSet<TodoItem> TodoItems { get; set; }
+    public DbSet<Academy> Academies { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
