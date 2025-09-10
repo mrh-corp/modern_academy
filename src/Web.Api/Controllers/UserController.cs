@@ -1,5 +1,7 @@
+using Application.Abstractions.Authentication;
 using Application.Users;
 using Domain.Users;
+using Facet.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedKernel;
@@ -9,7 +11,7 @@ using Web.Api.Responses;
 namespace Web.Api.Controllers;
 
 [Route("api/user")]
-public class UserController(IUserRepository userRepository) : Controller
+public class UserController(IUserRepository userRepository, ITokenProvider tokenProvider) : Controller
 {
     [HttpPost]
     [AllowAnonymous]
@@ -23,7 +25,7 @@ public class UserController(IUserRepository userRepository) : Controller
 
     [HttpPost("sign-in")]
     [AllowAnonymous]
-    public async Task<ActionResult<Result<User>>> SignIn(
+    public async Task<ActionResult<Result<SignInResponse>>> SignIn(
         [FromBody] SignInDto dto)
     {
         User? user = await userRepository.GetUserByUsername(dto.Email);
@@ -41,6 +43,11 @@ public class UserController(IUserRepository userRepository) : Controller
             return BadRequest(
                 Result.Failure(Error.Problem("400", "User password doesn't match")));
         }
-        return Ok(Result.Success(user));
+
+        string token = tokenProvider.Create(user);
+        var response = new SignInResponse(
+            token,
+            user.ToFacet<User, UserResponse>());
+        return Ok(Result.Success(response));
     }
 }
