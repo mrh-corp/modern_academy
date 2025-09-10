@@ -1,34 +1,24 @@
-name: Build
+name: Deploy to Server
 
 on:
-  workflow_dispatch:
   push:
     branches:
-      - main
-
-env:
-  DOTNET_VERSION: "9.x"
+      - main  # change to your deployment branch if needed
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@v1.0.0
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Restore
-        run: dotnet restore CleanArchitecture.sln
-
-      - name: Build
-        run: dotnet build CleanArchitecture.sln --configuration Release --no-restore
-
-      - name: Test
-        run: dotnet test CleanArchitecture.sln --configuration Release --no-restore --no-build
-
-      - name: Publish
-        run: dotnet publish CleanArchitecture.sln --configuration Release --no-restore --no-build
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/modern_academy
+            git pull origin main
+            cp -fp /var/secrets/appsettings.Development.json src/Web.Api/
+            docker compose up web-api --build -d
