@@ -39,6 +39,31 @@ internal static class ServiceCollectionExtensions
             };
 
             o.AddSecurityRequirement(securityRequirement);
+            
+            var activeScScheme = new OpenApiSecurityScheme
+            {
+                Name = "active-sc",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
+                Description = "Custom header for active-sc"
+            };
+
+            o.AddSecurityDefinition("active-sc", activeScScheme);
+
+            o.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = ""
+                        }
+                    },
+                    []
+                }
+            });
         });
 
         return services;
