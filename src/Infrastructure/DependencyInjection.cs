@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using Amazon.S3;
 using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
 using Application.Abstractions.Service;
@@ -31,7 +32,8 @@ public static class DependencyInjection
             .AddDatabase(configuration)
             .AddHealthChecks(configuration)
             .AddAuthenticationInternal(configuration)
-            .AddAuthorizationInternal();
+            .AddAuthorizationInternal()
+            .AddS3Service(configuration);
 
     private static IServiceCollection AddServices(this IServiceCollection services)
     {
@@ -141,6 +143,22 @@ public static class DependencyInjection
 
         services.AddTransient<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
 
+        return services;
+    }
+    
+    public static IServiceCollection AddS3Service(this IServiceCollection services, IConfiguration configuration)
+    {
+        IConfigurationSection s3Config = configuration.GetSection("S3");
+        services.AddSingleton<IAmazonS3>(sp => new AmazonS3Client(
+            s3Config["AccessKey"],
+            s3Config["SecretKey"],
+            new AmazonS3Config
+            {
+                ServiceURL = s3Config["ServiceURL"],
+                ForcePathStyle = true,
+                AuthenticationRegion = s3Config["Region"],
+            }
+        ));
         return services;
     }
 }

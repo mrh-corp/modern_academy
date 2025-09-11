@@ -5,6 +5,7 @@
   <!--.NET 9 packages. Most of them will work on .NET 8. If you need to, make the updates here individually.-->
   <ItemGroup>
     <!-- Static code analysis -->
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.7" />
     <PackageVersion Include="Facet" Version="2.6.0" />
     <PackageVersion Include="Facet.Extensions" Version="2.6.0" />
     <PackageVersion Include="Facet.Mapping" Version="2.6.0" />
