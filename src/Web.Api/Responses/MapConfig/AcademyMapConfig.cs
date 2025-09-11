@@ -3,7 +3,7 @@ using Domain.Users;
 using Facet.Extensions;
 using Facet.Mapping;
 
-namespace Web.Api.Responses;
+namespace Web.Api.Responses.MapConfig;
 
 public class AcademyMapConfig : IFacetMapConfiguration<Academy, AcademyResponse>
 {

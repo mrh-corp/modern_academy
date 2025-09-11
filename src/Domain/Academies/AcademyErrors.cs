@@ -19,4 +19,9 @@ public static class AcademyErrors
     public static Error SchoolYearConflict(string label) => Error.Conflict(
         "Academy.SchoolYearConflict",
         $"School year {label} conflict.");
+
+    public static Error ExistingClasses(List<(string Field, string Value)> duplicates) => Error.Conflict(
+        "Academy.ExistingClasses",
+        $"Academy classes {duplicates} already exists."
+    );
 }

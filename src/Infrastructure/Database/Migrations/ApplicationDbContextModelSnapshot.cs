@@ -72,6 +72,10 @@ namespace Infrastructure.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<Guid>("AcademyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("academy_id");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -86,12 +90,35 @@ namespace Infrastructure.Database.Migrations
                         .HasColumnType("text")
                         .HasColumnName("name");
 
+                    b.Property<Guid?>("NextClassId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("next_class_id");
+
+                    b.Property<Guid?>("PreviousClassId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("previous_class_id");
+
+                    b.Property<int>("Section")
+                        .HasColumnType("integer")
+                        .HasColumnName("section");
+
                     b.Property<DateTime>("UpdateAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("update_at");
 
                     b.HasKey("Id")
                         .HasName("pk_classes");
+
+                    b.HasIndex("AcademyId")
+                        .HasDatabaseName("ix_classes_academy_id");
+
+                    b.HasIndex("NextClassId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_classes_next_class_id");
+
+                    b.HasIndex("PreviousClassId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_classes_previous_class_id");
 
                     b.ToTable("classes", "public");
                 });
@@ -130,6 +157,123 @@ namespace Infrastructure.Database.Migrations
                         .HasDatabaseName("ix_school_years_academy_id");
 
                     b.ToTable("school_years", "public");
+                });
+
+            modelBuilder.Entity("Domain.Courses.ClassCourse", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AcademyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("academy_id");
+
+                    b.Property<Guid>("ClassId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("class_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("SchoolYearId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("school_year_id");
+
+                    b.Property<DateTime>("UpdateAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("update_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_class_courses");
+
+                    b.HasIndex("AcademyId")
+                        .HasDatabaseName("ix_class_courses_academy_id");
+
+                    b.HasIndex("ClassId")
+                        .HasDatabaseName("ix_class_courses_class_id");
+
+                    b.HasIndex("SchoolYearId")
+                        .HasDatabaseName("ix_class_courses_school_year_id");
+
+                    b.ToTable("class_courses", "public");
+                });
+
+            modelBuilder.Entity("Domain.Courses.Course", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("ClassCourseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("class_course_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("label");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<DateTime>("UpdateAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("update_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_courses");
+
+                    b.HasIndex("ClassCourseId")
+                        .HasDatabaseName("ix_courses_class_course_id");
+
+                    b.ToTable("courses", "public");
+                });
+
+            modelBuilder.Entity("Domain.Courses.CourseCredit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("CourseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("course_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<double>("Credit")
+                        .HasColumnType("double precision")
+                        .HasColumnName("credit");
+
+                    b.Property<DateTime>("UpdateAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("update_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_course_credits");
+
+                    b.HasIndex("CourseId")
+                        .HasDatabaseName("ix_course_credits_course_id");
+
+                    b.ToTable("course_credits", "public");
                 });
 
             modelBuilder.Entity("Domain.Todos.TodoItem", b =>
@@ -237,12 +381,90 @@ namespace Infrastructure.Database.Migrations
                     b.ToTable("users", "public");
                 });
 
+            modelBuilder.Entity("Domain.Academies.Class", b =>
+                {
+                    b.HasOne("Domain.Academies.Academy", "Academy")
+                        .WithMany()
+                        .HasForeignKey("AcademyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_classes_academies_academy_id");
+
+                    b.HasOne("Domain.Academies.Class", "NextClass")
+                        .WithOne()
+                        .HasForeignKey("Domain.Academies.Class", "NextClassId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_classes_classes_next_class_id");
+
+                    b.HasOne("Domain.Academies.Class", "PreviousClass")
+                        .WithOne()
+                        .HasForeignKey("Domain.Academies.Class", "PreviousClassId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_classes_classes_previous_class_id");
+
+                    b.Navigation("Academy");
+
+                    b.Navigation("NextClass");
+
+                    b.Navigation("PreviousClass");
+                });
+
             modelBuilder.Entity("Domain.Academies.SchoolYear", b =>
                 {
                     b.HasOne("Domain.Academies.Academy", null)
                         .WithMany("SchoolYears")
                         .HasForeignKey("AcademyId")
                         .HasConstraintName("fk_school_years_academies_academy_id");
+                });
+
+            modelBuilder.Entity("Domain.Courses.ClassCourse", b =>
+                {
+                    b.HasOne("Domain.Academies.Academy", "Academy")
+                        .WithMany()
+                        .HasForeignKey("AcademyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_class_courses_academies_academy_id");
+
+                    b.HasOne("Domain.Academies.Class", "Class")
+                        .WithMany()
+                        .HasForeignKey("ClassId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_class_courses_classes_class_id");
+
+                    b.HasOne("Domain.Academies.SchoolYear", "SchoolYear")
+                        .WithMany()
+                        .HasForeignKey("SchoolYearId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_class_courses_school_years_school_year_id");
+
+                    b.Navigation("Academy");
+
+                    b.Navigation("Class");
+
+                    b.Navigation("SchoolYear");
+                });
+
+            modelBuilder.Entity("Domain.Courses.Course", b =>
+                {
+                    b.HasOne("Domain.Courses.ClassCourse", null)
+                        .WithMany("Courses")
+                        .HasForeignKey("ClassCourseId")
+                        .HasConstraintName("fk_courses_class_courses_class_course_id");
+                });
+
+            modelBuilder.Entity("Domain.Courses.CourseCredit", b =>
+                {
+                    b.HasOne("Domain.Courses.Course", "Course")
+                        .WithMany()
+                        .HasForeignKey("CourseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_course_credits_courses_course_id");
+
+                    b.Navigation("Course");
                 });
 
             modelBuilder.Entity("Domain.Todos.TodoItem", b =>
@@ -268,6 +490,11 @@ namespace Infrastructure.Database.Migrations
                     b.Navigation("Administrators");
 
                     b.Navigation("SchoolYears");
+                });
+
+            modelBuilder.Entity("Domain.Courses.ClassCourse", b =>
+                {
+                    b.Navigation("Courses");
                 });
 #pragma warning restore 612, 618
         }

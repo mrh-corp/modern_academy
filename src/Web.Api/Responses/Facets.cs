@@ -2,6 +2,7 @@ using Domain.Academies;
 using Domain.Users;
 using Facet;
 using SharedKernel;
+using Web.Api.Responses.MapConfig;
 
 namespace Web.Api.Responses;
 
@@ -22,3 +23,9 @@ public partial class AcademyResponse
 
 [Facet(typeof(SchoolYear), nameof(SchoolYear.DomainEvents))]
 public partial class SchoolYearResponse;
+
+[Facet(
+    typeof(Class),
+    nameof(Class.DomainEvents), nameof(Class.Academy), nameof(Class.PreviousClass), nameof(Class.NextClass))]
+public partial class ClassResponse;
+

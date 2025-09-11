@@ -1,5 +1,6 @@
 ﻿using Application.Abstractions.Data;
 using Domain.Academies;
+using Domain.Courses;
 using Domain.Todos;
 using Domain.Users;
 using Infrastructure.DomainEvents;
@@ -18,7 +19,10 @@ public sealed class ApplicationDbContext(
     public DbSet<Academy> Academies { get; set; }
     public DbSet<SchoolYear> SchoolYears { get; set; }
     public DbSet<Class> Classes { get; set; }
-    
+    public DbSet<Course> Courses { get; set; }
+    public DbSet<CourseCredit> CourseCredits { get; set; }
+    public DbSet<ClassCourse> ClassCourses { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);

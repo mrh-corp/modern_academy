@@ -59,4 +59,14 @@ public class AcademyController(IAcademyRepository academyRepository) : Controlle
             }, schoolYears => Ok(Result.Success(schoolYears.SelectFacets<SchoolYear, SchoolYearResponse>().ToList()))
         );
     }
+
+    [HttpPost("classes")]
+    [Authorize]
+    public async Task<ActionResult<List<ClassResponse>>> CreateClasses([FromBody] ClassDto[] classesDto, CancellationToken token)
+    {
+        OneOf<Error, List<Class>> result = await academyRepository.AddClasses(classesDto, token);
+        return result.Match<ActionResult>(
+            error => BadRequest(Result.Failure(error)),
+            classes => Ok(Result.Success(classes.SelectFacets<Class, ClassResponse>().ToList())));
+    }
 }

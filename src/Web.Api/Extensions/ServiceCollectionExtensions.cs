@@ -42,13 +42,13 @@ internal static class ServiceCollectionExtensions
             
             var activeScScheme = new OpenApiSecurityScheme
             {
-                Name = "active-sc",
+                Name = "School-Year",
                 In = ParameterLocation.Header,
                 Type = SecuritySchemeType.ApiKey,
-                Description = "Custom header for active-sc"
+                Description = "Default active school year"
             };
 
-            o.AddSecurityDefinition("active-sc", activeScScheme);
+            o.AddSecurityDefinition("School-Year", activeScScheme);
 
             o.AddSecurityRequirement(new OpenApiSecurityRequirement
             {
@@ -58,7 +58,32 @@ internal static class ServiceCollectionExtensions
                         Reference = new OpenApiReference
                         {
                             Type = ReferenceType.SecurityScheme,
-                            Id = ""
+                            Id = "School-Year"
+                        }
+                    },
+                    []
+                }
+            });
+            
+            var academicScheme = new OpenApiSecurityScheme
+            {
+                Name = "Active-Academic",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
+                Description = "Active Academic"
+            };
+
+            o.AddSecurityDefinition("Active-Academic", academicScheme);
+
+            o.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Active-Academic"
                         }
                     },
                     []

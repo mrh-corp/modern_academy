@@ -1,5 +1,6 @@
 using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
+using Application.Abstractions.Params;
 using Application.Academies;
 using Domain.Academies;
 using Domain.Users;
@@ -12,6 +13,7 @@ namespace Infrastructure.Academies;
 
 public class AcademyService(
     IUserContext userContext,
+    IActiveParamsContext paramsContext,
     IApplicationDbContext context) : IAcademyRepository
 {
     public async Task<OneOf<Error, Academy>> CreateAcademy(AcademyDto academyDto, CancellationToken cancellationToken = default)
@@ -100,5 +102,88 @@ public class AcademyService(
             return AcademyErrors.NotFound(academyId);
         }
         return academy.SchoolYears;
+    }
+
+    public async Task<OneOf<Error, List<Class>>> AddClasses(ClassDto[] classes, CancellationToken cancellationToken = default)
+    {
+        Academy academy = await paramsContext.ActiveAcademy;
+        
+        await using IDbContextTransaction transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            var tempMap = new Dictionary<Guid, Class>();
+            var result = new List<Class>();
+            var duplicates = new List<(string Field, string Value)>();
+
+            string[] names = classes.Select(x => x.Name).ToArray();
+            string[] labels = classes.Select(x => x.Label).ToArray();
+
+            List<Class> existingConflicts = await context.Classes.Where(c =>
+                    c.Academy.Id == academy.Id && (names.Contains(c.Name) || labels.Contains(c.Label)))
+                .ToListAsync(cancellationToken);
+
+            foreach (Class conflict in existingConflicts)
+            {
+                if (names.Contains(conflict.Name))
+                {
+                    duplicates.Add(("Name", conflict.Name));
+                }
+
+                if (labels.Contains(conflict.Label))
+                {
+                    duplicates.Add(("Label", conflict.Label));
+                }
+            }
+            if (existingConflicts.Any())
+            {
+                return AcademyErrors.ExistingClasses(duplicates);
+            }
+            
+            foreach (ClassDto classDto in classes)
+            {
+                var @class = new Class
+                {
+                    Label = classDto.Label,
+                    Name = classDto.Name,
+                    Academy = academy,
+                    Section = classDto.Section,
+                };
+
+                tempMap[classDto.TempId] = @class;
+                result.Add(@class);
+
+                context.Classes.Add(@class);
+            }
+            await context.SaveChangesAsync(cancellationToken);
+
+            foreach (ClassDto classDto in classes)
+            {
+                Class @class = tempMap[classDto.TempId];
+
+                if (classDto.PreviousId is { } prevId)
+                {
+                    @class.PreviousClass = tempMap.TryGetValue(prevId, out Class? prevClass)
+                        ? prevClass
+                        : await context.Classes.SingleOrDefaultAsync(x => x.Id == prevId, cancellationToken);
+                }
+
+                if (classDto.NextId is {} nextId)
+                {
+                    @class.NextClass = tempMap.TryGetValue(nextId, out Class? nextClass)
+                        ? nextClass
+                        : await context.Classes.SingleOrDefaultAsync(x => x.Id == nextId, cancellationToken);
+                }
+            }
+
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return result;
+        }
+        catch (Exception e)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return Error.Problem("Unknown.Error", e.Message);
+        }
     }
 }
