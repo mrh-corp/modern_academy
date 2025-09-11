@@ -39,6 +39,56 @@ internal static class ServiceCollectionExtensions
             };
 
             o.AddSecurityRequirement(securityRequirement);
+            
+            var activeScScheme = new OpenApiSecurityScheme
+            {
+                Name = "School-Year",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
+                Description = "Default active school year"
+            };
+
+            o.AddSecurityDefinition("School-Year", activeScScheme);
+
+            o.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "School-Year"
+                        }
+                    },
+                    []
+                }
+            });
+            
+            var academicScheme = new OpenApiSecurityScheme
+            {
+                Name = "Active-Academic",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
+                Description = "Active Academic"
+            };
+
+            o.AddSecurityDefinition("Active-Academic", academicScheme);
+
+            o.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Active-Academic"
+                        }
+                    },
+                    []
+                }
+            });
         });
 
         return services;
