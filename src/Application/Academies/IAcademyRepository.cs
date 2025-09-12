@@ -12,5 +12,6 @@ public interface IAcademyRepository : IService
     Task<OneOf<Error, List<SchoolYear>>> CreateSchoolYear(SchoolYearDto schoolYearDto, CancellationToken cancellationToken = default);
     Task<OneOf<Error, List<SchoolYear>>> GetAllSchoolYear(Guid academyId, CancellationToken cancellationToken = default);
     Task<OneOf<Error,List<Class>>> AddClasses(ClassDto[] classes, CancellationToken cancellationToken = default);
+    Task<OneOf<Error, Academy>> UploadAcademyLogo(string filename, Stream file, CancellationToken cancellationToken = default);
 
 }

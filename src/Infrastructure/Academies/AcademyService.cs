@@ -1,9 +1,14 @@
+using System.Reflection;
+using System.Reflection.Emit;
 using Application.Abstractions.Authentication;
+using Application.Abstractions.Cache;
 using Application.Abstractions.Data;
 using Application.Abstractions.Params;
 using Application.Academies;
+using Application.Storage;
 using Domain.Academies;
 using Domain.Users;
+using Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using OneOf;
@@ -14,7 +19,9 @@ namespace Infrastructure.Academies;
 public class AcademyService(
     IUserContext userContext,
     IActiveParamsContext paramsContext,
-    IApplicationDbContext context) : IAcademyRepository
+    IApplicationDbContext context,
+    IStorageRepository storageRepository
+    ) : IAcademyRepository
 {
     public async Task<OneOf<Error, Academy>> CreateAcademy(AcademyDto academyDto, CancellationToken cancellationToken = default)
     {
@@ -185,5 +192,35 @@ public class AcademyService(
             await transaction.RollbackAsync(cancellationToken);
             return Error.Problem("Unknown.Error", e.Message);
         }
+    }
+
+    public async Task<OneOf<Error, Academy>> UploadAcademyLogo(string filename, Stream file, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            Academy academy = await paramsContext.ActiveAcademy;
+            if (academy.LogoAttachmentUrl is not null)
+            {
+                await storageRepository.RemoveFileAsync(academy.LogoAttachmentUrl);
+            }
+            string result = await storageRepository.UploadFileAsync(filename, file);
+            if (academy.LogoAttachmentUrl is not null)
+            {
+                await storageRepository.RemoveFileCacheKey(academy.LogoAttachmentUrl);
+            }
+            academy.LogoAttachmentUrl = result;
+            await context.SaveChangesAsync(cancellationToken);
+            return academy;
+        }
+        catch (Exception e)
+        {
+            if (e is StorageException)
+            {
+                return Error.Problem("File.ErrorUpload", e.Message);
+            }
+            return Error.Problem("Unknown.Error", e.Message);
+        }
+        
+        
     }
 }

@@ -9,6 +9,7 @@ public sealed class Academy : Entity
     public string Description { get; set; }
     public string Email { get; set; }
     public string Contact { get; set; }
+    public string? LogoAttachmentUrl { get; set; }
     public List<User> Administrators { get; set; }
     public List<SchoolYear> SchoolYears { get; set; }
 }

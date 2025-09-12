@@ -1,34 +1,66 @@
+using System.Globalization;
 using System.Net;
-using Amazon.S3;
-using Amazon.S3.Model;
+using Application.Abstractions.Cache;
 using Application.Storage;
+using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
+using Minio;
+using Minio.DataModel.Args;
+using Minio.DataModel.Response;
 using SharedKernel;
 using OneOf;
+using StackExchange.Redis;
 
 namespace Infrastructure.Storage;
 
-public class StorageService(IAmazonS3 s3Client, IConfiguration configuration) : IStorateRepository
+public class StorageService(
+    IMinioClient s3Client,
+    IConfiguration configuration,
+    ICacheManager cache,
+    IHttpClientFactory httpClientFactory) : IStorageRepository
 {
-    private readonly string _bucketName = configuration["Storage:Bucket"] ?? "storage";
+    private string BucketName => configuration.GetSection("S3")["Bucket"];
+    private HttpClient? _httpClient;
 
-    public async Task<OneOf<Error, string>> UploadFileAsync(string filename, Stream fileStream)
+    private HttpClient HttpClient
     {
-        await s3Client.EnsureBucketExistsAsync(_bucketName);
-        string objectKey = filename.Trim('/');
-        var putRequest = new PutObjectRequest
+        get
         {
-            BucketName = _bucketName,
-            Key = objectKey,
-            InputStream = fileStream
-        };
-        PutObjectResponse response = await s3Client.PutObjectAsync(putRequest);
-        if (response.HttpStatusCode != HttpStatusCode.OK)
-        {
-            return Error.Problem($"S3.{response.HttpStatusCode}", $"Error uploading file {filename}");
+            _httpClient ??= httpClientFactory.CreateClient();
+            return _httpClient;
         }
+    }
 
-        return objectKey;
+    public async Task<string> UploadFileAsync(string filename, Stream fileStream)
+    {
+        try
+        {
+            // Ensure bucket exists
+            bool found = await s3Client.BucketExistsAsync(new BucketExistsArgs().WithBucket(BucketName));
+            if (!found)
+            {
+                await s3Client.MakeBucketAsync(new MakeBucketArgs().WithBucket(BucketName));
+            }
+
+            PutObjectArgs putObjectArgs = new PutObjectArgs()
+                .WithBucket(BucketName)
+                .WithObject(filename)
+                .WithStreamData(fileStream);
+
+            PutObjectResponse response = await s3Client.PutObjectAsync(putObjectArgs);
+
+            if (response.ResponseStatusCode != HttpStatusCode.OK)
+            {
+                throw new StorageException($"Error uploading file {filename}");
+            }
+
+            return filename;
+        }
+        catch (Exception ex)
+        {
+            throw new StorageException($"Unhandled error on uploading file {ex.Message}");
+        }
     }
 
     public Task<Stream> DownloadFileAsync(string filename)
@@ -36,16 +68,76 @@ public class StorageService(IAmazonS3 s3Client, IConfiguration configuration) : 
         throw new NotImplementedException();
     }
 
-    public Task<string> GetFileUrlAsync(string filename, int expireInHours = 72)
+    public async Task<string> GetFileUrlAsync(string filename, int expireInMinutes = 5)
     {
-        string key = filename.Trim('/');
-        var request = new GetPreSignedUrlRequest
+        string cacheKey = $"{filename}-{BucketName}";
+        string cacheUrl = await cache.RedisDb.StringGetAsync(cacheKey);
+        if (cacheUrl == null)
         {
-            BucketName = _bucketName,
-            Key = key,
-            Expires = DateTime.UtcNow.AddHours(expireInHours)
-        };
+            var provider = new FileExtensionContentTypeProvider();
+            if (!provider.TryGetContentType(filename, out string contentType))
+            {
+                contentType = $"application/octet-stream";
+            }
+            var headers = new Dictionary<string, string> { { "Content-Type", contentType } };
+            string presignedUrl = await s3Client.PresignedGetObjectAsync(
+                new PresignedGetObjectArgs()
+                    .WithBucket(BucketName)
+                    .WithObject(filename)
+                    .WithExpiry(expireInMinutes * 60)
+                    .WithHeaders(headers)
+            );
+            TimeSpan ttl = DateTime.UtcNow.AddMinutes(expireInMinutes) - DateTime.UtcNow;
+            await cache.RedisDb.StringSetAsync(cacheKey, presignedUrl, ttl);
+            cacheUrl = presignedUrl;
+        }
         
-        return s3Client.GetPreSignedURLAsync(request);
+        return cacheUrl;
+    }
+
+    public async Task<FileInformation> GetFile(string filename)
+    {
+        string cacheKey = $"{BucketName}:{filename}";
+        
+        byte[]? cachedFile = await cache.RedisDb.StringGetAsync(cacheKey);
+        if (cachedFile is null)
+        {
+            string minioUrl = await GetFileUrlAsync(filename);
+            using HttpResponseMessage response = await HttpClient.GetAsync(minioUrl);
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new StorageException($"Error getting the file {filename}");
+            }
+
+            cachedFile = await response.Content.ReadAsByteArrayAsync();
+            
+            TimeSpan ttl = DateTime.UtcNow.AddHours(72) - DateTime.UtcNow;
+            await cache.RedisDb.StringSetAsync(cacheKey, cachedFile, ttl);
+        }
+
+        var provider = new FileExtensionContentTypeProvider();
+        if (!provider.TryGetContentType(filename, out string contentType))
+        {
+            contentType = "application/octet-stream";
+        }
+        return new FileInformation(cachedFile, contentType);
+    }
+
+    public async Task RemoveFileAsync(string filename)
+    {
+        bool found = await s3Client.BucketExistsAsync(new BucketExistsArgs().WithBucket(BucketName));
+        if (!found)
+        {
+            await s3Client.MakeBucketAsync(new MakeBucketArgs().WithBucket(BucketName));
+        }
+        await s3Client.RemoveObjectAsync(new RemoveObjectArgs()
+            .WithBucket(BucketName)
+            .WithObject(filename));
+    }
+
+    public async Task<bool> RemoveFileCacheKey(string filename)
+    {
+        string key = $"{BucketName}:{filename}";
+        return await cache.RedisDb.KeyDeleteAsync(key);
     }
 }

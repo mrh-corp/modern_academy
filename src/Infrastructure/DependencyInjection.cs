@@ -18,7 +18,9 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Minio;
 using SharedKernel;
+using StackExchange.Redis;
 
 namespace Infrastructure;
 
@@ -28,12 +30,14 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration) =>
         services
+            .AddHttpClient()
             .AddServices()
             .AddDatabase(configuration)
             .AddHealthChecks(configuration)
             .AddAuthenticationInternal(configuration)
             .AddAuthorizationInternal()
-            .AddS3Service(configuration);
+            .AddS3Service(configuration)
+            .AddRedis(configuration);
 
     private static IServiceCollection AddServices(this IServiceCollection services)
     {
@@ -146,19 +150,22 @@ public static class DependencyInjection
         return services;
     }
     
-    public static IServiceCollection AddS3Service(this IServiceCollection services, IConfiguration configuration)
+    private static IServiceCollection AddS3Service(this IServiceCollection services, IConfiguration configuration)
     {
         IConfigurationSection s3Config = configuration.GetSection("S3");
-        services.AddSingleton<IAmazonS3>(sp => new AmazonS3Client(
-            s3Config["AccessKey"],
-            s3Config["SecretKey"],
-            new AmazonS3Config
-            {
-                ServiceURL = s3Config["ServiceURL"],
-                ForcePathStyle = true,
-                AuthenticationRegion = s3Config["Region"],
-            }
-        ));
+        string accessKey = s3Config["AccessKey"];
+        Console.WriteLine(accessKey);
+        services.AddMinio(configureClient => configureClient
+            .WithEndpoint(s3Config["ServerURL"])
+            .WithCredentials(s3Config["AccessKey"], s3Config["SecretKey"])
+            .WithSSL(s3Config.GetValue<bool>("UseSSL"))
+            .Build());
+        return services;
+    }
+
+    private static IServiceCollection AddRedis(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddSingleton<IConnectionMultiplexer>(sp => ConnectionMultiplexer.Connect(configuration["Redis"] ?? "localhost:6380"));
         return services;
     }
 }

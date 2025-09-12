@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedKernel;
 using OneOf;
+using Web.Api.Infrastructure;
 using Web.Api.Responses;
 
 namespace Web.Api.Controllers;
@@ -21,6 +22,19 @@ public class AcademyController(IAcademyRepository academyRepository) : Controlle
             error => BadRequest(Result.Failure(error)),
             academy => Ok(Result.Success(academy.ToFacet<Academy, AcademyResponse>()))
             );
+    }
+
+    [HttpPost("upload-logo")]
+    [Authorize]
+    public async Task<ActionResult<AcademyResponse>> UploadAcademyLogo([FromForm] AcademyLogo academyLogo, CancellationToken cancellationToken)
+    {
+        string filename = academyLogo.AcademyLogoFile.FileName;
+        Stream fileStream = academyLogo.AcademyLogoFile.OpenReadStream();
+        OneOf<Error, Academy>  result = await academyRepository.UploadAcademyLogo(filename, fileStream, cancellationToken);
+        return result.Match<ActionResult>(
+            error => BadRequest(Result.Failure(error)),
+            academy => Ok(Result.Success(academy.ToFacet<Academy, AcademyResponse>()))
+        );
     }
 
     [HttpPost("school-year")]

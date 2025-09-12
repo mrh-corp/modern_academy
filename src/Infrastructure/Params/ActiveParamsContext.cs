@@ -20,7 +20,9 @@ public class ActiveParamsContext(IApplicationDbContext context) :  IActiveParams
 
     private async Task<Academy> GetActiveAcademy()
     {
-        Academy academy = await context.Academies.SingleOrDefaultAsync(a => a.Id == AcademyId);
+        Academy academy = await context.Academies
+            .Include(x => x.Administrators)
+            .SingleOrDefaultAsync(a => a.Id == AcademyId);
         return academy;
     }
 }
