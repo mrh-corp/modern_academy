@@ -29,7 +29,7 @@ public class AcademyController(IAcademyRepository academyRepository) : Controlle
     public async Task<ActionResult<AcademyResponse>> UploadAcademyLogo([FromForm] AcademyLogo academyLogo, CancellationToken cancellationToken)
     {
         string filename = academyLogo.AcademyLogoFile.FileName;
-        Stream fileStream = academyLogo.AcademyLogoFile.OpenReadStream();
+        await using Stream fileStream = academyLogo.AcademyLogoFile.OpenReadStream();
         OneOf<Error, Academy>  result = await academyRepository.UploadAcademyLogo(filename, fileStream, cancellationToken);
         return result.Match<ActionResult>(
             error => BadRequest(Result.Failure(error)),

@@ -46,7 +46,9 @@ public class StorageService(
             PutObjectArgs putObjectArgs = new PutObjectArgs()
                 .WithBucket(BucketName)
                 .WithObject(filename)
-                .WithStreamData(fileStream);
+                .WithContentType(GetContentType(filename))
+                .WithStreamData(fileStream)
+                .WithObjectSize(fileStream.Length);
 
             PutObjectResponse response = await s3Client.PutObjectAsync(putObjectArgs);
 
@@ -74,11 +76,7 @@ public class StorageService(
         string cacheUrl = await cache.RedisDb.StringGetAsync(cacheKey);
         if (cacheUrl == null)
         {
-            var provider = new FileExtensionContentTypeProvider();
-            if (!provider.TryGetContentType(filename, out string contentType))
-            {
-                contentType = $"application/octet-stream";
-            }
+            string contentType = GetContentType(filename);
             var headers = new Dictionary<string, string> { { "Content-Type", contentType } };
             string presignedUrl = await s3Client.PresignedGetObjectAsync(
                 new PresignedGetObjectArgs()
@@ -114,13 +112,7 @@ public class StorageService(
             TimeSpan ttl = DateTime.UtcNow.AddHours(72) - DateTime.UtcNow;
             await cache.RedisDb.StringSetAsync(cacheKey, cachedFile, ttl);
         }
-
-        var provider = new FileExtensionContentTypeProvider();
-        if (!provider.TryGetContentType(filename, out string contentType))
-        {
-            contentType = "application/octet-stream";
-        }
-        return new FileInformation(cachedFile, contentType);
+        return new FileInformation(cachedFile, GetContentType(filename));
     }
 
     public async Task RemoveFileAsync(string filename)
@@ -139,5 +131,16 @@ public class StorageService(
     {
         string key = $"{BucketName}:{filename}";
         return await cache.RedisDb.KeyDeleteAsync(key);
+    }
+
+    private string GetContentType(string filename)
+    {
+        var provider = new FileExtensionContentTypeProvider();
+        if (!provider.TryGetContentType(filename, out string contentType))
+        {
+            contentType = "application/octet-stream";
+        }
+
+        return contentType;
     }
 }
