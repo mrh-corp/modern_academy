@@ -6,7 +6,6 @@ public static class ApplicationBuilderExtensions
     {
         app.UseSwagger();
         app.UseSwaggerUI();
-
         return app;
     }
 }

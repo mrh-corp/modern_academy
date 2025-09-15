@@ -26,6 +26,7 @@ public class AcademyController(IAcademyRepository academyRepository) : Controlle
 
     [HttpPost("upload-logo")]
     [Authorize]
+    [TenantRequired]
     public async Task<ActionResult<AcademyResponse>> UploadAcademyLogo([FromForm] AcademyLogo academyLogo, CancellationToken cancellationToken)
     {
         string filename = academyLogo.AcademyLogoFile.FileName;
@@ -39,6 +40,7 @@ public class AcademyController(IAcademyRepository academyRepository) : Controlle
 
     [HttpPost("school-year")]
     [Authorize]
+    [TenantRequired]
     public async Task<ActionResult<List<SchoolYearResponse>>> CreateSchoolYear([FromBody] SchoolYearDto schoolYearDto,
         CancellationToken token)
     {
@@ -57,11 +59,12 @@ public class AcademyController(IAcademyRepository academyRepository) : Controlle
             );
     }
 
-    [HttpGet("{academyId}/school-year")]
+    [HttpGet("school-year")]
     [Authorize]
-    public async Task<ActionResult<List<SchoolYearResponse>>> GetSchoolYearList(Guid academyId, CancellationToken token)
+    [TenantRequired]
+    public async Task<ActionResult<List<SchoolYearResponse>>> GetSchoolYearList(CancellationToken token)
     {
-        OneOf<Error, List<SchoolYear>> result = await academyRepository.GetAllSchoolYear(academyId, token);
+        OneOf<Error, List<SchoolYear>> result = await academyRepository.GetAllSchoolYear(token);
         return result.Match<ActionResult>(
             error =>
             {
@@ -76,6 +79,7 @@ public class AcademyController(IAcademyRepository academyRepository) : Controlle
 
     [HttpPost("classes")]
     [Authorize]
+    [TenantRequired]
     public async Task<ActionResult<List<ClassResponse>>> CreateClasses([FromBody] ClassDto[] classesDto, CancellationToken token)
     {
         OneOf<Error, List<Class>> result = await academyRepository.AddClasses(classesDto, token);

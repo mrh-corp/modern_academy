@@ -20,7 +20,8 @@ public class AcademyService(
     IUserContext userContext,
     IActiveParamsContext paramsContext,
     IApplicationDbContext context,
-    IStorageRepository storageRepository
+    IStorageRepository storageRepository,
+    ITenantContext  tenantContext
     ) : IAcademyRepository
 {
     public async Task<OneOf<Error, Academy>> CreateAcademy(AcademyDto academyDto, CancellationToken cancellationToken = default)
@@ -57,20 +58,12 @@ public class AcademyService(
         await using IDbContextTransaction transaction = await context.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            Academy academy = await context.Academies
-                .Include(x => x.Administrators)
-                .Include(x => x.SchoolYears)
-                .AsSplitQuery()
-                .SingleOrDefaultAsync(x => x.Id == schoolYearDto.AcademyId, cancellationToken);
-            if (academy is null)
-            {
-                return AcademyErrors.NotFound(schoolYearDto.AcademyId);
-            }
+            Academy academy = tenantContext.Academy!;
             
             bool userIsAdmin = academy.Administrators.Any(x => x.Id == userContext.UserId);
             if (!userIsAdmin)
             {
-                return AcademyErrors.Forbidden(schoolYearDto.AcademyId);
+                return AcademyErrors.Forbidden(academy.Id);
             }
 
             var schoolYear = new SchoolYear
@@ -99,16 +92,11 @@ public class AcademyService(
         }
     }
 
-    public async Task<OneOf<Error, List<SchoolYear>>> GetAllSchoolYear(
-        Guid academyId,
+    public Task<OneOf<Error, List<SchoolYear>>> GetAllSchoolYear(
         CancellationToken cancellationToken = default)
     {
-        Academy academy = await context.Academies.SingleOrDefaultAsync(x => x.Id == academyId,  cancellationToken);
-        if (academy is null)
-        {
-            return AcademyErrors.NotFound(academyId);
-        }
-        return academy.SchoolYears;
+        return Task.FromResult<OneOf<Error, List<SchoolYear>>>(
+            tenantContext.Academy!.SchoolYears);
     }
 
     public async Task<OneOf<Error, List<Class>>> AddClasses(ClassDto[] classes, CancellationToken cancellationToken = default)
