@@ -41,6 +41,7 @@ public class StorageService(
                 await s3Client.MakeBucketAsync(new MakeBucketArgs().WithBucket(bucketName));
             }
 
+            filename = Renamefile(filename);
             PutObjectArgs putObjectArgs = new PutObjectArgs()
                 .WithBucket(bucketName)
                 .WithObject(filename)
@@ -140,5 +141,14 @@ public class StorageService(
         }
 
         return contentType;
+    }
+
+    private string Renamefile(string filename)
+    {
+        string newBaseName = Guid.CreateVersion7().ToString();
+        int lastDot = filename.LastIndexOf('.');
+        string extension = lastDot >= 0 ? filename.Substring(lastDot) : "";
+        string newFilename = newBaseName + extension;
+        return newFilename;
     }
 }

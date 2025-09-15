@@ -1,4 +1,5 @@
 using Domain.Academies;
+using Domain.Fields;
 using Domain.Users;
 using Facet;
 using SharedKernel;
@@ -19,6 +20,7 @@ public partial class UserResponse;
 public partial class AcademyResponse
 {
     public List<UserResponse> Administrators { get; set; }
+    public List<CustomFieldObject> CustomFields { get; set; }
 }
 
 [Facet(typeof(SchoolYear), nameof(SchoolYear.DomainEvents))]

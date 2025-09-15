@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using SharedKernel;
 
 namespace Domain.Students;
@@ -20,5 +21,5 @@ public class Student : Entity
     public string MotherContact { get; set; }
     public string? TutorName { get; set; }
     public string TutorContact { get; set; }
-    public List<CustomStudentField>  CustomFields { get; set; }
+    public JsonObject?  CustomFields { get; set; }
 }

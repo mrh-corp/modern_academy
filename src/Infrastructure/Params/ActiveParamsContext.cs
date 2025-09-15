@@ -9,20 +9,10 @@ public class ActiveParamsContext(IApplicationDbContext context) :  IActiveParams
 {
     public Guid SchoolYearId { get; set; }
     public Task<SchoolYear> ActiveSchoolYear => GetActiveSchoolYear();
-    public Guid AcademyId { get; set; }
-    public Task<Academy> ActiveAcademy => GetActiveAcademy();
 
     private async Task<SchoolYear> GetActiveSchoolYear()
     {
         SchoolYear schoolYear = await context.SchoolYears.SingleOrDefaultAsync(s => s.Id == SchoolYearId);
         return schoolYear;
-    }
-
-    private async Task<Academy> GetActiveAcademy()
-    {
-        Academy academy = await context.Academies
-            .Include(x => x.Administrators)
-            .SingleOrDefaultAsync(a => a.Id == AcademyId);
-        return academy;
     }
 }
