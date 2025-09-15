@@ -8,6 +8,7 @@ public static class MiddlewareExtensions
     {
         app.UseMiddleware<RequestContextLoggingMiddleware>();
         app.UseMiddleware<ActiveParamsMiddleware>();
+        app.UseMiddleware<SubDomainTenantMiddleware>();
 
         return app;
     }

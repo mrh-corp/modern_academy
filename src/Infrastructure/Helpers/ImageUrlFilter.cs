@@ -1,3 +1,4 @@
+using Application.Abstractions.Params;
 using Application.Storage;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -13,7 +14,9 @@ public class ImageUrlFilter : IAsyncResultFilter
         {
             IStorageRepository storageRepository =
                 context.HttpContext.RequestServices.GetRequiredService<IStorageRepository>();
-            var helper = new ImageUrlHelper(storageRepository);
+            ITenantContext tenantContext =
+                context.HttpContext.RequestServices.GetRequiredService<ITenantContext>();
+            var helper = new ImageUrlHelper(storageRepository, tenantContext);
             await helper.UpdateImageUrls(objectResult.Value);
         }
         await next();

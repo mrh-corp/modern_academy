@@ -16,11 +16,9 @@ namespace Infrastructure.Storage;
 
 public class StorageService(
     IMinioClient s3Client,
-    IConfiguration configuration,
     ICacheManager cache,
     IHttpClientFactory httpClientFactory) : IStorageRepository
 {
-    private string BucketName => configuration.GetSection("S3")["Bucket"];
     private HttpClient? _httpClient;
 
     private HttpClient HttpClient
@@ -32,19 +30,19 @@ public class StorageService(
         }
     }
 
-    public async Task<string> UploadFileAsync(string filename, Stream fileStream)
+    public async Task<string> UploadFileAsync(string filename, Stream fileStream, string bucketName)
     {
         try
         {
             // Ensure bucket exists
-            bool found = await s3Client.BucketExistsAsync(new BucketExistsArgs().WithBucket(BucketName));
+            bool found = await s3Client.BucketExistsAsync(new BucketExistsArgs().WithBucket(bucketName));
             if (!found)
             {
-                await s3Client.MakeBucketAsync(new MakeBucketArgs().WithBucket(BucketName));
+                await s3Client.MakeBucketAsync(new MakeBucketArgs().WithBucket(bucketName));
             }
 
             PutObjectArgs putObjectArgs = new PutObjectArgs()
-                .WithBucket(BucketName)
+                .WithBucket(bucketName)
                 .WithObject(filename)
                 .WithContentType(GetContentType(filename))
                 .WithStreamData(fileStream)
@@ -70,9 +68,9 @@ public class StorageService(
         throw new NotImplementedException();
     }
 
-    public async Task<string> GetFileUrlAsync(string filename, int expireInMinutes = 5)
+    public async Task<string> GetFileUrlAsync(string filename, string bucketName, int expireInMinutes = 5)
     {
-        string cacheKey = $"{filename}-{BucketName}";
+        string cacheKey = $"{filename}-{bucketName}";
         string cacheUrl = await cache.RedisDb.StringGetAsync(cacheKey);
         if (cacheUrl == null)
         {
@@ -80,7 +78,7 @@ public class StorageService(
             var headers = new Dictionary<string, string> { { "Content-Type", contentType } };
             string presignedUrl = await s3Client.PresignedGetObjectAsync(
                 new PresignedGetObjectArgs()
-                    .WithBucket(BucketName)
+                    .WithBucket(bucketName)
                     .WithObject(filename)
                     .WithExpiry(expireInMinutes * 60)
                     .WithHeaders(headers)
@@ -93,14 +91,14 @@ public class StorageService(
         return cacheUrl;
     }
 
-    public async Task<FileInformation> GetFile(string filename)
+    public async Task<FileInformation> GetFile(string filename, string bucketName)
     {
-        string cacheKey = $"{BucketName}:{filename}";
+        string cacheKey = $"{bucketName}:{filename}";
         
         byte[]? cachedFile = await cache.RedisDb.StringGetAsync(cacheKey);
         if (cachedFile is null)
         {
-            string minioUrl = await GetFileUrlAsync(filename);
+            string minioUrl = await GetFileUrlAsync(filename, bucketName);
             using HttpResponseMessage response = await HttpClient.GetAsync(minioUrl);
             if (!response.IsSuccessStatusCode)
             {
@@ -115,21 +113,21 @@ public class StorageService(
         return new FileInformation(cachedFile, GetContentType(filename));
     }
 
-    public async Task RemoveFileAsync(string filename)
+    public async Task RemoveFileAsync(string filename, string bucketName)
     {
-        bool found = await s3Client.BucketExistsAsync(new BucketExistsArgs().WithBucket(BucketName));
+        bool found = await s3Client.BucketExistsAsync(new BucketExistsArgs().WithBucket(bucketName));
         if (!found)
         {
-            await s3Client.MakeBucketAsync(new MakeBucketArgs().WithBucket(BucketName));
+            await s3Client.MakeBucketAsync(new MakeBucketArgs().WithBucket(bucketName));
         }
         await s3Client.RemoveObjectAsync(new RemoveObjectArgs()
-            .WithBucket(BucketName)
+            .WithBucket(bucketName)
             .WithObject(filename));
     }
 
-    public async Task<bool> RemoveFileCacheKey(string filename)
+    public async Task<bool> RemoveFileCacheKey(string filename, string bucketName)
     {
-        string key = $"{BucketName}:{filename}";
+        string key = $"{bucketName}:{filename}";
         return await cache.RedisDb.KeyDeleteAsync(key);
     }
 

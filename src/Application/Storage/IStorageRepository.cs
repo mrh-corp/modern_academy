@@ -6,11 +6,11 @@ namespace Application.Storage;
 
 public interface IStorageRepository : IService
 {
-    Task<string> UploadFileAsync(string filename, Stream fileStream);
+    Task<string> UploadFileAsync(string filename, Stream fileStream, string bucketName);
     Task<Stream> DownloadFileAsync(string filename);
-    Task<string> GetFileUrlAsync(string filename, int expireInMinutes = 5);
-    Task<FileInformation> GetFile(string filename);
-    Task RemoveFileAsync(string filename);
-    Task<bool> RemoveFileCacheKey(string filename);
+    Task<string> GetFileUrlAsync(string filename, string bucketName, int expireInMinutes = 5);
+    Task<FileInformation> GetFile(string filename, string bucketName);
+    Task RemoveFileAsync(string filename, string bucketName);
+    Task<bool> RemoveFileCacheKey(string filename, string bucketName);
 
 }

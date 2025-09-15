@@ -1,12 +1,16 @@
 using System.Collections;
 using System.Reflection;
+using Application.Abstractions.Params;
 using Application.Storage;
 using SharedKernel;
 
 namespace Infrastructure.Helpers;
 
-public class ImageUrlHelper(IStorageRepository storageRepository)
+public class ImageUrlHelper(
+    IStorageRepository storageRepository,
+    ITenantContext tenantContext)
 {
+    private string _bucketName => tenantContext.TenantName;
     public async Task UpdateImageUrls(object? obj)
     {
         if (obj == null)
@@ -36,7 +40,7 @@ public class ImageUrlHelper(IStorageRepository storageRepository)
             object value = prop.GetValue(obj);
             if (prop.Name.Contains("AttachmentUrl") && value is string str)
             {
-                string url = await Transform(str);
+                string url = await Transform(str, _bucketName);
                 prop.SetValue(obj, url);
             }
             else
@@ -50,9 +54,9 @@ public class ImageUrlHelper(IStorageRepository storageRepository)
         }
     }
 
-    private async Task<string> Transform(string transform)
+    private async Task<string> Transform(string transform, string bucketName)
     {
-        string url = await storageRepository.GetFileUrlAsync(transform);
+        string url = await storageRepository.GetFileUrlAsync(transform, bucketName);
         return url;
     }
     private static bool IsSimpleType(Type type)

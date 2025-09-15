@@ -36,6 +36,7 @@ public class AcademyService(
         var academy = new Academy
         {
             Name = academyDto.Name,
+            TenantName = academyDto.TenantName,
             Description = academyDto.Description,
             Email = academyDto.Email,
             Contact = academyDto.Contact,
@@ -186,15 +187,20 @@ public class AcademyService(
     {
         try
         {
-            Academy academy = await paramsContext.ActiveAcademy;
+            Academy academy = tenantContext.Academy!;
+            string bucketName = academy.TenantName;
             if (academy.LogoAttachmentUrl is not null)
             {
-                await storageRepository.RemoveFileAsync(academy.LogoAttachmentUrl);
+                await storageRepository.RemoveFileAsync(
+                    academy.LogoAttachmentUrl,
+                    bucketName);
             }
-            string result = await storageRepository.UploadFileAsync(filename, file);
+            string result = await storageRepository.UploadFileAsync(filename, file, bucketName);
             if (academy.LogoAttachmentUrl is not null)
             {
-                await storageRepository.RemoveFileCacheKey(academy.LogoAttachmentUrl);
+                await storageRepository.RemoveFileCacheKey(
+                    academy.LogoAttachmentUrl,
+                    bucketName);
             }
             academy.LogoAttachmentUrl = result;
             await context.SaveChangesAsync(cancellationToken);
