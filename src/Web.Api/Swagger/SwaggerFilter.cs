@@ -29,12 +29,12 @@ public class SwaggerFilter(IHttpContextAccessor httpContextAccessor, IConfigurat
                 }
                 operation.Deprecated = true;
             }
-        }
-        else
-        {
-            if (hasTenantAttribute)
+            else
             {
-                operation.Deprecated = true;
+                if (hasTenantAttribute)
+                {
+                    operation.Deprecated = true;
+                }
             }
         }
     }
