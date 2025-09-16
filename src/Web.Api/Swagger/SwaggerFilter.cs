@@ -15,13 +15,18 @@ public class SwaggerFilter(IHttpContextAccessor httpContextAccessor, IConfigurat
         }
 
         string host = httpContext.Request.Host.Host;
-        string appHost = configuration.GetValue<string>("AppHost");
+        string appHost = configuration.GetValue<string>("AppHost")!;
         bool hasTenantAttribute = context.ApiDescription.ActionDescriptor.EndpointMetadata
             .OfType<TenantRequiredAttribute>().Any();
-        if (appHost is not null && host.EndsWith(appHost, StringComparison.OrdinalIgnoreCase))
+        if (host.EndsWith(appHost, StringComparison.OrdinalIgnoreCase))
         {
-            if (!hasTenantAttribute)
+            string prefix = host.Substring(startIndex: 0, host.Length -  appHost.Length);
+            if (!string.IsNullOrEmpty(prefix))
             {
+                if (hasTenantAttribute)
+                {
+                    return;
+                }
                 operation.Deprecated = true;
             }
         }
