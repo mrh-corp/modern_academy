@@ -16,7 +16,7 @@ public class SubDomainTenantMiddleware(RequestDelegate next)
         IApplicationDbContext dbContext = context.RequestServices.GetRequiredService<IApplicationDbContext>();
         string host = context.Request.Host.Host;
         string? tenant = GetTenantFromHost(host, configuration);
-        if (tenant != null)
+        if (!string.IsNullOrEmpty(tenant))
         {
             tenantContext.TenantName = tenant;
             tenantContext.Academy = await dbContext.Academies
