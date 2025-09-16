@@ -1,4 +1,5 @@
 using Domain.Academies;
+using Domain.Fields;
 using Domain.Users;
 using Facet;
 using SharedKernel;

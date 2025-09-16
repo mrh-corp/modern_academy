@@ -10,5 +10,6 @@ public class AcademyMapConfig : IFacetMapConfiguration<Academy, AcademyResponse>
     public static void Map(Academy source, AcademyResponse target)
     {
         target.Administrators = source.Administrators.SelectFacets<User, UserResponse>().ToList();
+        
     }
 }

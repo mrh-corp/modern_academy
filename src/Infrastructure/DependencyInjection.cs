@@ -3,11 +3,13 @@ using System.Text;
 using System.Text.Json;
 using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
+using Application.Abstractions.Nginx;
 using Application.Abstractions.Service;
 using Infrastructure.Authentication;
 using Infrastructure.Authorization;
 using Infrastructure.Database;
 using Infrastructure.DomainEvents;
+using Infrastructure.Nginx;
 using Infrastructure.Time;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -17,7 +19,9 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Minio;
 using SharedKernel;
+using StackExchange.Redis;
 
 namespace Infrastructure;
 
@@ -27,11 +31,15 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration) =>
         services
+            .AddHttpClient()
             .AddServices()
             .AddDatabase(configuration)
             .AddHealthChecks(configuration)
             .AddAuthenticationInternal(configuration)
-            .AddAuthorizationInternal();
+            .AddAuthorizationInternal()
+            .AddS3Service(configuration)
+            .AddRedis(configuration)
+            .AddNginxManager(configuration);
 
     private static IServiceCollection AddServices(this IServiceCollection services)
     {
@@ -141,6 +149,34 @@ public static class DependencyInjection
 
         services.AddTransient<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
 
+        return services;
+    }
+    
+    private static IServiceCollection AddS3Service(this IServiceCollection services, IConfiguration configuration)
+    {
+        IConfigurationSection s3Config = configuration.GetSection("S3");
+        string accessKey = s3Config["AccessKey"];
+        Console.WriteLine(accessKey);
+        services.AddMinio(configureClient => configureClient
+            .WithEndpoint(s3Config["ServerURL"])
+            .WithCredentials(s3Config["AccessKey"], s3Config["SecretKey"])
+            .WithSSL(s3Config.GetValue<bool>("UseSSL"))
+            .Build());
+        return services;
+    }
+
+    private static IServiceCollection AddRedis(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddSingleton<IConnectionMultiplexer>(sp => ConnectionMultiplexer.Connect(configuration["Redis"] ?? "localhost:6380"));
+        return services;
+    }
+
+    private static IServiceCollection AddNginxManager(this IServiceCollection services, IConfiguration configuration)
+    {
+        IConfigurationSection npmSection =  configuration.GetSection("npm");
+        services.AddHttpClient<INginxProxy, NginxProxy>("nginx-client", client => 
+            client.BaseAddress = new Uri(npmSection.GetValue<string>("npmUrl")!));
+        services.AddScoped<INginxProxy, NginxProxy>();
         return services;
     }
 }

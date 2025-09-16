@@ -1,11 +1,16 @@
 using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
+using Application.Abstractions.Nginx;
 using Application.Abstractions.Params;
 using Application.Academies;
+using Application.Storage;
 using Domain.Academies;
 using Domain.Users;
+using Infrastructure.Nginx;
+using Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Configuration;
 using OneOf;
 using SharedKernel;
 
@@ -13,29 +18,57 @@ namespace Infrastructure.Academies;
 
 public class AcademyService(
     IUserContext userContext,
-    IActiveParamsContext paramsContext,
-    IApplicationDbContext context) : IAcademyRepository
+    IApplicationDbContext context,
+    IStorageRepository storageRepository,
+    ITenantContext  tenantContext,
+    INginxProxy nginxProxy,
+    IConfiguration configuration
+    ) : IAcademyRepository
 {
-    public async Task<OneOf<Error, Academy>> CreateAcademy(AcademyDto academyDto, CancellationToken cancellationToken = default)
+    public async Task<OneOf<Error, Academy>> CreateAcademy(
+        AcademyDto academyDto,
+        CancellationToken cancellationToken = default)
     {
-        bool nameNotExists = await context.Academies.AnyAsync(x => x.Name == academyDto.Name, cancellationToken);
-        if (nameNotExists)
+        await using IDbContextTransaction transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        try
         {
-            return AcademyErrors.NameNotUnique(academyDto.Name);
-        }
+            bool nameNotExists = await context.Academies.AnyAsync(x => x.Name == academyDto.Name, cancellationToken);
+            if (nameNotExists)
+            {
+                return AcademyErrors.NameNotUnique(academyDto.Name);
+            }
 
-        User user = await userContext.CurrentUser;
-        var academy = new Academy
+            User user = await userContext.CurrentUser;
+            var academy = new Academy
+            {
+                Name = academyDto.Name,
+                TenantName = academyDto.TenantName,
+                Description = academyDto.Description,
+                Email = academyDto.Email,
+                Contact = academyDto.Contact,
+                Administrators = [user]
+            };
+            context.Academies.Add(academy);
+            await context.SaveChangesAsync(cancellationToken);
+            IConfigurationSection npmSection = configuration.GetSection("npm");
+            if (npmSection.GetValue<bool>("installSSL"))
+            {
+                string baseDomainName = npmSection.GetValue<string>("baseDomainName") ?? "";
+                await nginxProxy.EncryptDomainName($"{academy.TenantName}.{baseDomainName}");
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+            return academy;
+        }
+        catch (Exception ex)
         {
-            Name = academyDto.Name,
-            Description = academyDto.Description,
-            Email = academyDto.Email,
-            Contact = academyDto.Contact,
-            Administrators = [user]
-        };
-        context.Academies.Add(academy);
-        await context.SaveChangesAsync(cancellationToken);
-        return academy;
+            await transaction.RollbackAsync(cancellationToken);
+            if (ex is not NginxException)
+            {
+                return Error.Problem("Academy.Error",  ex.Message);
+            }
+            throw;
+        }
     }
 
     public Task<List<Academy>> GetAllAcademy()
@@ -50,20 +83,12 @@ public class AcademyService(
         await using IDbContextTransaction transaction = await context.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            Academy academy = await context.Academies
-                .Include(x => x.Administrators)
-                .Include(x => x.SchoolYears)
-                .AsSplitQuery()
-                .SingleOrDefaultAsync(x => x.Id == schoolYearDto.AcademyId, cancellationToken);
-            if (academy is null)
-            {
-                return AcademyErrors.NotFound(schoolYearDto.AcademyId);
-            }
+            Academy academy = tenantContext.Academy!;
             
             bool userIsAdmin = academy.Administrators.Any(x => x.Id == userContext.UserId);
             if (!userIsAdmin)
             {
-                return AcademyErrors.Forbidden(schoolYearDto.AcademyId);
+                return AcademyErrors.Forbidden(academy.Id);
             }
 
             var schoolYear = new SchoolYear
@@ -92,21 +117,16 @@ public class AcademyService(
         }
     }
 
-    public async Task<OneOf<Error, List<SchoolYear>>> GetAllSchoolYear(
-        Guid academyId,
+    public Task<OneOf<Error, List<SchoolYear>>> GetAllSchoolYear(
         CancellationToken cancellationToken = default)
     {
-        Academy academy = await context.Academies.SingleOrDefaultAsync(x => x.Id == academyId,  cancellationToken);
-        if (academy is null)
-        {
-            return AcademyErrors.NotFound(academyId);
-        }
-        return academy.SchoolYears;
+        return Task.FromResult<OneOf<Error, List<SchoolYear>>>(
+            tenantContext.Academy!.SchoolYears);
     }
 
     public async Task<OneOf<Error, List<Class>>> AddClasses(ClassDto[] classes, CancellationToken cancellationToken = default)
     {
-        Academy academy = await paramsContext.ActiveAcademy;
+        Academy academy = tenantContext.Academy!;
         
         await using IDbContextTransaction transaction = await context.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -185,5 +205,40 @@ public class AcademyService(
             await transaction.RollbackAsync(cancellationToken);
             return Error.Problem("Unknown.Error", e.Message);
         }
+    }
+
+    public async Task<OneOf<Error, Academy>> UploadAcademyLogo(string filename, Stream file, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            Academy academy = tenantContext.Academy!;
+            string bucketName = academy.TenantName;
+            if (academy.LogoAttachmentUrl is not null)
+            {
+                await storageRepository.RemoveFileAsync(
+                    academy.LogoAttachmentUrl,
+                    bucketName);
+            }
+            string result = await storageRepository.UploadFileAsync("Academy", filename, file, bucketName);
+            if (academy.LogoAttachmentUrl is not null)
+            {
+                await storageRepository.RemoveFileCacheKey(
+                    academy.LogoAttachmentUrl,
+                    bucketName);
+            }
+            academy.LogoAttachmentUrl = result;
+            await context.SaveChangesAsync(cancellationToken);
+            return academy;
+        }
+        catch (Exception e)
+        {
+            if (e is StorageException)
+            {
+                return Error.Problem("File.ErrorUpload", e.Message);
+            }
+            return Error.Problem("Unknown.Error", e.Message);
+        }
+        
+        
     }
 }

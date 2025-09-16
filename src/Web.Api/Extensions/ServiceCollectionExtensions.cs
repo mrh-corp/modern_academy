@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
+using Web.Api.Infrastructure;
+using Web.Api.Swagger;
 
 namespace Web.Api.Extensions;
 
@@ -65,30 +67,7 @@ internal static class ServiceCollectionExtensions
                 }
             });
             
-            var academicScheme = new OpenApiSecurityScheme
-            {
-                Name = "Active-Academic",
-                In = ParameterLocation.Header,
-                Type = SecuritySchemeType.ApiKey,
-                Description = "Active Academic"
-            };
-
-            o.AddSecurityDefinition("Active-Academic", academicScheme);
-
-            o.AddSecurityRequirement(new OpenApiSecurityRequirement
-            {
-                {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = "Active-Academic"
-                        }
-                    },
-                    []
-                }
-            });
+            o.OperationFilter<SwaggerFilter>();
         });
 
         return services;

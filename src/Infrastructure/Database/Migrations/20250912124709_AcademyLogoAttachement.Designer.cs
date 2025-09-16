@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250912124709_AcademyLogoAttachement")]
+    partial class AcademyLogoAttachement
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -59,25 +62,12 @@ namespace Infrastructure.Database.Migrations
                         .HasColumnType("text")
                         .HasColumnName("name");
 
-                    b.Property<string>("TenantName")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("tenant_name");
-
                     b.Property<DateTime>("UpdateAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("update_at");
 
                     b.HasKey("Id")
                         .HasName("pk_academies");
-
-                    b.HasIndex("Name")
-                        .IsUnique()
-                        .HasDatabaseName("ix_academies_name");
-
-                    b.HasIndex("TenantName")
-                        .IsUnique()
-                        .HasDatabaseName("ix_academies_tenant_name");
 
                     b.ToTable("academies", "public");
                 });
@@ -206,8 +196,14 @@ namespace Infrastructure.Database.Migrations
                     b.HasKey("Id")
                         .HasName("pk_class_courses");
 
+                    b.HasIndex("AcademyId")
+                        .HasDatabaseName("ix_class_courses_academy_id");
+
                     b.HasIndex("ClassId")
                         .HasDatabaseName("ix_class_courses_class_id");
+
+                    b.HasIndex("SchoolYearId")
+                        .HasDatabaseName("ix_class_courses_school_year_id");
 
                     b.ToTable("class_courses", "public");
                 });
@@ -430,6 +426,13 @@ namespace Infrastructure.Database.Migrations
 
             modelBuilder.Entity("Domain.Courses.ClassCourse", b =>
                 {
+                    b.HasOne("Domain.Academies.Academy", "Academy")
+                        .WithMany()
+                        .HasForeignKey("AcademyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_class_courses_academies_academy_id");
+
                     b.HasOne("Domain.Academies.Class", "Class")
                         .WithMany()
                         .HasForeignKey("ClassId")
@@ -437,7 +440,18 @@ namespace Infrastructure.Database.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_class_courses_classes_class_id");
 
+                    b.HasOne("Domain.Academies.SchoolYear", "SchoolYear")
+                        .WithMany()
+                        .HasForeignKey("SchoolYearId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_class_courses_school_years_school_year_id");
+
+                    b.Navigation("Academy");
+
                     b.Navigation("Class");
+
+                    b.Navigation("SchoolYear");
                 });
 
             modelBuilder.Entity("Domain.Courses.Course", b =>

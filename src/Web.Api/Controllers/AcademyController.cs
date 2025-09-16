@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedKernel;
 using OneOf;
+using Web.Api.Infrastructure;
 using Web.Api.Responses;
 
 namespace Web.Api.Controllers;
@@ -23,9 +24,24 @@ public class AcademyController(IAcademyRepository academyRepository) : Controlle
             );
     }
 
+    [HttpPost("upload-logo")]
+    [Authorize]
+    [TenantRequired]
+    public async Task<ActionResult<Result<AcademyResponse>>> UploadAcademyLogo([FromForm] AcademyLogo academyLogo, CancellationToken cancellationToken)
+    {
+        string filename = academyLogo.AcademyLogoFile.FileName;
+        await using Stream fileStream = academyLogo.AcademyLogoFile.OpenReadStream();
+        OneOf<Error, Academy>  result = await academyRepository.UploadAcademyLogo(filename, fileStream, cancellationToken);
+        return result.Match<ActionResult>(
+            error => BadRequest(Result.Failure(error)),
+            academy => Ok(Result.Success(academy.ToFacet<Academy, AcademyResponse>()))
+        );
+    }
+
     [HttpPost("school-year")]
     [Authorize]
-    public async Task<ActionResult<List<SchoolYearResponse>>> CreateSchoolYear([FromBody] SchoolYearDto schoolYearDto,
+    [TenantRequired]
+    public async Task<ActionResult<Result<List<SchoolYearResponse>>>> CreateSchoolYear([FromBody] SchoolYearDto schoolYearDto,
         CancellationToken token)
     {
         OneOf<Error, List<SchoolYear>> result = await academyRepository.CreateSchoolYear(schoolYearDto, token);
@@ -43,11 +59,12 @@ public class AcademyController(IAcademyRepository academyRepository) : Controlle
             );
     }
 
-    [HttpGet("{academyId}/school-year")]
+    [HttpGet("school-year")]
     [Authorize]
-    public async Task<ActionResult<List<SchoolYearResponse>>> GetSchoolYearList(Guid academyId, CancellationToken token)
+    [TenantRequired]
+    public async Task<ActionResult<Result<List<SchoolYearResponse>>>> GetSchoolYearList(CancellationToken token)
     {
-        OneOf<Error, List<SchoolYear>> result = await academyRepository.GetAllSchoolYear(academyId, token);
+        OneOf<Error, List<SchoolYear>> result = await academyRepository.GetAllSchoolYear(token);
         return result.Match<ActionResult>(
             error =>
             {
@@ -62,7 +79,8 @@ public class AcademyController(IAcademyRepository academyRepository) : Controlle
 
     [HttpPost("classes")]
     [Authorize]
-    public async Task<ActionResult<List<ClassResponse>>> CreateClasses([FromBody] ClassDto[] classesDto, CancellationToken token)
+    [TenantRequired]
+    public async Task<ActionResult<Result<List<ClassResponse>>>> CreateClasses([FromBody] ClassDto[] classesDto, CancellationToken token)
     {
         OneOf<Error, List<Class>> result = await academyRepository.AddClasses(classesDto, token);
         return result.Match<ActionResult>(
