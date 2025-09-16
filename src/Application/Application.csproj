@@ -18,14 +18,4 @@
   <ItemGroup>
 	<InternalsVisibleTo Include="Application.UnitTests" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Microsoft.Extensions.Configuration.Abstractions">
-      <HintPath>..\..\..\..\..\..\..\home\ranto\.dotnet\packs\Microsoft.AspNetCore.App.Ref\9.0.8\ref\net9.0\Microsoft.Extensions.Configuration.Abstractions.dll</HintPath>
-    </Reference>
-    <Reference Include="StackExchange.Redis">
-      <HintPath>..\..\..\..\..\..\..\home\ranto\.nuget\packages\stackexchange.redis\2.9.17\lib\net8.0\StackExchange.Redis.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
 </Project>

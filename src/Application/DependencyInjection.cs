@@ -1,9 +1,4 @@
-﻿using System.Reflection;
-using Application.Abstractions.Behaviors;
-using Application.Abstractions.Messaging;
-using Application.Abstractions.Service;
-using FluentValidation;
-using Microsoft.Extensions.Configuration;
+﻿using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using SharedKernel;
 
