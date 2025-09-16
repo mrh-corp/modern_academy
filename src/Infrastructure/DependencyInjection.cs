@@ -1,14 +1,15 @@
 ﻿using System.Reflection;
 using System.Text;
 using System.Text.Json;
-using Amazon.S3;
 using Application.Abstractions.Authentication;
 using Application.Abstractions.Data;
+using Application.Abstractions.Nginx;
 using Application.Abstractions.Service;
 using Infrastructure.Authentication;
 using Infrastructure.Authorization;
 using Infrastructure.Database;
 using Infrastructure.DomainEvents;
+using Infrastructure.Nginx;
 using Infrastructure.Time;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -37,7 +38,8 @@ public static class DependencyInjection
             .AddAuthenticationInternal(configuration)
             .AddAuthorizationInternal()
             .AddS3Service(configuration)
-            .AddRedis(configuration);
+            .AddRedis(configuration)
+            .AddNginxManager(configuration);
 
     private static IServiceCollection AddServices(this IServiceCollection services)
     {
@@ -166,6 +168,15 @@ public static class DependencyInjection
     private static IServiceCollection AddRedis(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<IConnectionMultiplexer>(sp => ConnectionMultiplexer.Connect(configuration["Redis"] ?? "localhost:6380"));
+        return services;
+    }
+
+    private static IServiceCollection AddNginxManager(this IServiceCollection services, IConfiguration configuration)
+    {
+        IConfigurationSection npmSection =  configuration.GetSection("npm");
+        services.AddHttpClient<INginxProxy, NginxProxy>("nginx-client", client => 
+            client.BaseAddress = new Uri(npmSection.GetValue<string>("npmUrl")!));
+        services.AddScoped<INginxProxy, NginxProxy>();
         return services;
     }
 }

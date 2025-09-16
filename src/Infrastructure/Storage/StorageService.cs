@@ -30,7 +30,7 @@ public class StorageService(
         }
     }
 
-    public async Task<string> UploadFileAsync(string filename, Stream fileStream, string bucketName)
+    public async Task<string> UploadFileAsync(string objectKey, string filename, Stream fileStream, string bucketName)
     {
         try
         {
@@ -44,7 +44,7 @@ public class StorageService(
             filename = Renamefile(filename);
             PutObjectArgs putObjectArgs = new PutObjectArgs()
                 .WithBucket(bucketName)
-                .WithObject(filename)
+                .WithObject($"{objectKey}/{filename}")
                 .WithContentType(GetContentType(filename))
                 .WithStreamData(fileStream)
                 .WithObjectSize(fileStream.Length);
