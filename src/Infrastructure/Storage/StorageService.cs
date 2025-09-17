@@ -42,9 +42,10 @@ public class StorageService(
             }
 
             filename = Renamefile(filename);
+            string key = $"{objectKey}/{filename}";
             PutObjectArgs putObjectArgs = new PutObjectArgs()
                 .WithBucket(bucketName)
-                .WithObject($"{objectKey}/{filename}")
+                .WithObject(key)
                 .WithContentType(GetContentType(filename))
                 .WithStreamData(fileStream)
                 .WithObjectSize(fileStream.Length);
@@ -56,7 +57,7 @@ public class StorageService(
                 throw new StorageException($"Error uploading file {filename}");
             }
 
-            return filename;
+            return key;
         }
         catch (Exception ex)
         {
