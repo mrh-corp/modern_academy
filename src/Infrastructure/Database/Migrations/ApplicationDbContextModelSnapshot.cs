@@ -24,6 +24,25 @@ namespace Infrastructure.Database.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("AcademyUser", b =>
+                {
+                    b.Property<Guid>("AcademiesId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("academies_id");
+
+                    b.Property<Guid>("AdministratorsId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("administrators_id");
+
+                    b.HasKey("AcademiesId", "AdministratorsId")
+                        .HasName("pk_academy_user");
+
+                    b.HasIndex("AdministratorsId")
+                        .HasDatabaseName("ix_academy_user_administrators_id");
+
+                    b.ToTable("academy_user", "public");
+                });
+
             modelBuilder.Entity("Domain.Academies.Academy", b =>
                 {
                     b.Property<Guid>("Id")
@@ -348,10 +367,6 @@ namespace Infrastructure.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<Guid?>("AcademyId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("academy_id");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -382,14 +397,28 @@ namespace Infrastructure.Database.Migrations
                     b.HasKey("Id")
                         .HasName("pk_users");
 
-                    b.HasIndex("AcademyId")
-                        .HasDatabaseName("ix_users_academy_id");
-
                     b.HasIndex("Email")
                         .IsUnique()
                         .HasDatabaseName("ix_users_email");
 
                     b.ToTable("users", "public");
+                });
+
+            modelBuilder.Entity("AcademyUser", b =>
+                {
+                    b.HasOne("Domain.Academies.Academy", null)
+                        .WithMany()
+                        .HasForeignKey("AcademiesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_academy_user_academies_academies_id");
+
+                    b.HasOne("Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("AdministratorsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_academy_user_users_administrators_id");
                 });
 
             modelBuilder.Entity("Domain.Academies.Class", b =>
@@ -470,18 +499,8 @@ namespace Infrastructure.Database.Migrations
                         .HasConstraintName("fk_todo_item_users_user_id");
                 });
 
-            modelBuilder.Entity("Domain.Users.User", b =>
-                {
-                    b.HasOne("Domain.Academies.Academy", null)
-                        .WithMany("Administrators")
-                        .HasForeignKey("AcademyId")
-                        .HasConstraintName("fk_users_academies_academy_id");
-                });
-
             modelBuilder.Entity("Domain.Academies.Academy", b =>
                 {
-                    b.Navigation("Administrators");
-
                     b.Navigation("SchoolYears");
                 });
 
