@@ -20,9 +20,6 @@ public class SubDomainTenantMiddleware(RequestDelegate next)
         {
             tenantContext.TenantName = tenant;
             tenantContext.Academy = await dbContext.Academies
-                .Include(x => x.Administrators)
-                .Include(x => x.SchoolYears)
-                .AsSplitQuery()
                 .SingleOrDefaultAsync(x => x.TenantName == tenant);
         }
 

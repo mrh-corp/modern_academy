@@ -2,7 +2,7 @@ using Domain.Academies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Infrastructure.Academies;
+namespace Infrastructure.Classes;
 
 public class ClassConfiguration : IEntityTypeConfiguration<Class>
 {
@@ -18,5 +18,18 @@ public class ClassConfiguration : IEntityTypeConfiguration<Class>
             .WithOne()
             .HasForeignKey<Class>(c => c.NextClassId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder
+            .HasOne(c => c.Academy)
+            .WithMany(a => a.Classes)
+            .HasForeignKey(c => c.AcademyId);
+
+        builder
+            .HasIndex(c => new { c.AcademyId, c.Name })
+            .IsUnique();
+
+        builder
+            .HasIndex(c => new { c.AcademyId, c.Label })
+            .IsUnique();
     }
 }

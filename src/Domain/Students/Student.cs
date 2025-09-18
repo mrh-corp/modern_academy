@@ -1,11 +1,12 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Nodes;
+using Domain.Registrations;
 using SharedKernel;
 
 namespace Domain.Students;
 
 public class Student : Entity
 {
-    public string RegistrationNumber { get; set; }
     public string FullName { get; set; }
     public DateOnly BirthDate { get; set; }
     public string BirthPlace { get; set; }
@@ -20,6 +21,14 @@ public class Student : Entity
     public string FatherContact { get; set; }
     public string MotherContact { get; set; }
     public string? TutorName { get; set; }
-    public string TutorContact { get; set; }
-    public JsonObject?  CustomFields { get; set; }
+    public string? TutorContact { get; set; }
+    public string?  CustomFields { get; set; }
+    public virtual IEnumerable<Registration>? Registrations { get; set; }
+
+    [NotMapped]
+    public JsonObject Data
+    {
+        get => string.IsNullOrEmpty(CustomFields) ? new JsonObject() : JsonNode.Parse(CustomFields)!.AsObject();
+        set => CustomFields = value?.ToJsonString();
+    }
 }

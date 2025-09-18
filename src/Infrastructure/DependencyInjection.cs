@@ -78,11 +78,14 @@ public static class DependencyInjection
     {
         string? connectionString = configuration.GetConnectionString("Database");
 
-        services.AddDbContext<ApplicationDbContext>(
-            options => options
+        services.AddDbContext<ApplicationDbContext>(options =>
+        {
+            options
                 .UseNpgsql(connectionString, npgsqlOptions =>
                     npgsqlOptions.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Default))
-                .UseSnakeCaseNamingConvention());
+                .UseSnakeCaseNamingConvention();
+            options.UseLazyLoadingProxies();
+        });
 
         services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
 

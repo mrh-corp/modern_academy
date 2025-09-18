@@ -1,6 +1,7 @@
 ﻿using Domain.Academies;
 using Domain.Courses;
-using Domain.Todos;
+using Domain.Registrations;
+using Domain.Students;
 using Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -16,6 +17,8 @@ public interface IApplicationDbContext
     DbSet<Course> Courses { get; }
     DbSet<CourseCredit> CourseCredits { get; }
     DbSet<ClassCourse> ClassCourses { get; }
+    DbSet<Student>  Students { get; }
+    DbSet<Registration>  Registrations { get; }
     
     DatabaseFacade  Database { get; }
 

@@ -10,5 +10,8 @@ public class AcademyConfiguration : IEntityTypeConfiguration<Academy>
     {
         builder.HasIndex(x => x.Name).IsUnique();
         builder.HasIndex(x => x.TenantName).IsUnique();
+        builder
+            .HasMany(a => a.Administrators)
+            .WithMany(u => u.Academies);
     }
 }

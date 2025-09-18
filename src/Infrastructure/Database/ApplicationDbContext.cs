@@ -1,7 +1,8 @@
 ﻿using Application.Abstractions.Data;
 using Domain.Academies;
 using Domain.Courses;
-using Domain.Todos;
+using Domain.Registrations;
+using Domain.Students;
 using Domain.Users;
 using Infrastructure.DomainEvents;
 using Microsoft.EntityFrameworkCore;
@@ -22,12 +23,15 @@ public sealed class ApplicationDbContext(
     public DbSet<Course> Courses { get; set; }
     public DbSet<CourseCredit> CourseCredits { get; set; }
     public DbSet<ClassCourse> ClassCourses { get; set; }
+    public DbSet<Student> Students { get; set; }
+    public DbSet<Registration> Registrations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
 
         modelBuilder.HasDefaultSchema(Schemas.Default);
+        
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

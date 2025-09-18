@@ -1,10 +1,11 @@
 using System.Text.Json.Nodes;
+using Domain.Registrations;
 using Domain.Users;
 using SharedKernel;
 
 namespace Domain.Academies;
 
-public sealed class Academy : Entity
+public class Academy : Entity
 {
     public string Name { get; set; }
     public string TenantName { get; set; }
@@ -12,6 +13,8 @@ public sealed class Academy : Entity
     public string Email { get; set; }
     public string Contact { get; set; }
     public string? LogoAttachmentUrl { get; set; }
-    public List<User> Administrators { get; set; }
-    public List<SchoolYear> SchoolYears { get; set; }
+    public virtual List<User> Administrators { get; set; }
+    public virtual List<SchoolYear> SchoolYears { get; set; }
+    public virtual IEnumerable<Registration>? Registrations { get; set; }
+    public virtual IEnumerable<Class>? Classes { get; set; }
 }
