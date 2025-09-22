@@ -1,3 +1,4 @@
+using Domain.Notes;
 using SharedKernel;
 
 namespace Domain.Courses;
@@ -10,4 +11,5 @@ public class Course : Entity
     public virtual IEnumerable<ClassCourse>? ClassCourses { get; set; }
     public virtual CourseCredit? CourseCredit { get; set; }
     public virtual IEnumerable<CourseCredit>? CourseCredits { get; set; }
+    public virtual IEnumerable<Note>? Notes { get; set; }
 }

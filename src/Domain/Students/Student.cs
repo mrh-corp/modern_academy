@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Nodes;
+using Domain.Notes;
 using Domain.Registrations;
 using SharedKernel;
 
@@ -31,4 +32,6 @@ public class Student : Entity
         get => string.IsNullOrEmpty(CustomFields) ? new JsonObject() : JsonNode.Parse(CustomFields)!.AsObject();
         set => CustomFields = value?.ToJsonString();
     }
+
+    public virtual IEnumerable<Note>? Notes { get; set; }
 }

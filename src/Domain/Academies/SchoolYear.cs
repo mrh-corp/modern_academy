@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Domain.Courses;
+using Domain.Notes;
 using Domain.Registrations;
 using SharedKernel;
 
@@ -15,4 +16,5 @@ public class SchoolYear : Entity
 
     public virtual IEnumerable<Registration>? Registrations { get; set; }
     public virtual IEnumerable<ClassCourse>? ClassCourses { get; set; }
+    public virtual IEnumerable<Trimester>? Trimesters { get; set; }
 }
