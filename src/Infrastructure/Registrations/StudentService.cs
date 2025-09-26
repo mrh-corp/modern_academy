@@ -1,6 +1,7 @@
 using Application.Abstractions.Data;
 using Application.Abstractions.Params;
 using Application.Academies;
+using Application.Registrations;
 using Application.Students;
 using Domain.Academies;
 using Domain.Registrations;
@@ -10,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using OneOf;
 using SharedKernel;
 
-namespace Infrastructure.Students;
+namespace Infrastructure.Registrations;
 
 public class StudentService(
     IApplicationDbContext context,
@@ -63,7 +64,7 @@ public class StudentService(
             {
                 StudentId = student.Id,
                 CurrentClassId = currentClass.Id,
-                CurrentSchoolYearId = (await activeParamsContext.ActiveSchoolYear).Id,
+                CurrentSchoolYearId = activeParamsContext.SchoolYearId,
                 AcademyId = tenantContext.Academy!.Id
             };
             context.Registrations.Add(registration);

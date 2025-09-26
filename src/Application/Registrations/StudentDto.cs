@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 
-namespace Application.Students;
+namespace Application.Registrations;
 
 public record RegisterStudentDto(
     string FullName,
